@@ -60,12 +60,12 @@ cd semgrep_go/output/semgrep-interfaces
 git checkout v1.52.0
 
 # install go-jsonschema
-go install github.com/omissis/go-jsonschema/cmd/gojsonschema@latest
+# either via `go install` or downloading a release
 
 # generate the output
 # -p output: package name is output
 # -o output.go: write the structs to output.go
-gojsonschema -p output -o ../output.go --verbose semgrep_output_v1.jsonschema
+go-jsonschema -p output -o ../output.go --verbose semgrep_output_v1.jsonschema
 ```
 
 What I tried when generating Go structs from JSON schemas and didn't work:
@@ -79,14 +79,10 @@ https://parsiya.net/blog/2022-10-16-yaml-wrangling-with-rust/.
 [go-schema]: https://github.com/omissis/go-jsonschema
 
 ### Compatibility
-Currently, the package is using the v1.48.0 structs. Somewhere around v1.45.0
-the type of `CliError.Type` was changed from string to `ErrorType`.
+Currently, the package is using the v1.142.0 structs.
 
 The current output struct was tested with these Semgrep versions:
 
-* 1.48.0
-* 1.49.0
-* 1.50.0
-* 1.52.0
+* 1.142.1
 
 [si]: https://github.com/returntocorp/semgrep-interfaces

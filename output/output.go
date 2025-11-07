@@ -5,93 +5,131 @@ package output
 import "encoding/json"
 import "fmt"
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *SvalueValue) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["svalue_abstract_content"]; !ok || v == nil {
-		return fmt.Errorf("field svalue_abstract_content in SvalueValue: required")
-	}
-	type Plain SvalueValue
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = SvalueValue(plain)
-	return nil
+type Action interface{}
+
+type Analyzer string
+
+type ApplyFixesParams struct {
+	// Dryrun corresponds to the JSON schema field "dryrun".
+	Dryrun bool `json:"dryrun" yaml:"dryrun" mapstructure:"dryrun"`
+
+	// Edits corresponds to the JSON schema field "edits".
+	Edits []Edit `json:"edits" yaml:"edits" mapstructure:"edits"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ScaInfo) UnmarshalJSON(b []byte) error {
+func (j *ApplyFixesParams) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["dependency_match"]; !ok || v == nil {
-		return fmt.Errorf("field dependency_match in ScaInfo: required")
+	if _, ok := raw["dryrun"]; raw != nil && !ok {
+		return fmt.Errorf("field dryrun in ApplyFixesParams: required")
 	}
-	if v, ok := raw["reachability_rule"]; !ok || v == nil {
-		return fmt.Errorf("field reachability_rule in ScaInfo: required")
+	if _, ok := raw["edits"]; raw != nil && !ok {
+		return fmt.Errorf("field edits in ApplyFixesParams: required")
 	}
-	if v, ok := raw["reachable"]; !ok || v == nil {
-		return fmt.Errorf("field reachable in ScaInfo: required")
-	}
-	if v, ok := raw["sca_finding_schema"]; !ok || v == nil {
-		return fmt.Errorf("field sca_finding_schema in ScaInfo: required")
-	}
-	type Plain ScaInfo
+	type Plain ApplyFixesParams
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = ScaInfo(plain)
+	*j = ApplyFixesParams(plain)
+	return nil
+}
+
+type ApplyFixesReturn struct {
+	// FixedLines corresponds to the JSON schema field "fixed_lines".
+	FixedLines [][]interface{} `json:"fixed_lines" yaml:"fixed_lines" mapstructure:"fixed_lines"`
+
+	// ModifiedFileCount corresponds to the JSON schema field "modified_file_count".
+	ModifiedFileCount int `json:"modified_file_count" yaml:"modified_file_count" mapstructure:"modified_file_count"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ApplyFixesReturn) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["fixed_lines"]; raw != nil && !ok {
+		return fmt.Errorf("field fixed_lines in ApplyFixesReturn: required")
+	}
+	if _, ok := raw["modified_file_count"]; raw != nil && !ok {
+		return fmt.Errorf("field modified_file_count in ApplyFixesReturn: required")
+	}
+	type Plain ApplyFixesReturn
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ApplyFixesReturn(plain)
+	return nil
+}
+
+type Checks struct {
+	// Checks corresponds to the JSON schema field "checks".
+	Checks map[string]RuleResult `json:"checks" yaml:"checks" mapstructure:"checks"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Checks) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["checks"]; raw != nil && !ok {
+		return fmt.Errorf("field checks in Checks: required")
+	}
+	type Plain Checks
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Checks(plain)
 	return nil
 }
 
 type CiConfig struct {
 	// Autofix corresponds to the JSON schema field "autofix".
-	Autofix bool `json:"autofix" yaml:"autofix" mapstructure:"autofix"`
+	Autofix *bool `json:"autofix,omitempty" yaml:"autofix,omitempty" mapstructure:"autofix,omitempty"`
+
+	// Deepsemgrep corresponds to the JSON schema field "deepsemgrep".
+	Deepsemgrep *bool `json:"deepsemgrep,omitempty" yaml:"deepsemgrep,omitempty" mapstructure:"deepsemgrep,omitempty"`
+
+	// DependencyQuery corresponds to the JSON schema field "dependency_query".
+	DependencyQuery *bool `json:"dependency_query,omitempty" yaml:"dependency_query,omitempty" mapstructure:"dependency_query,omitempty"`
 
 	// EnabledProducts corresponds to the JSON schema field "enabled_products".
 	EnabledProducts []CiConfigEnabledProductsElem `json:"enabled_products" yaml:"enabled_products" mapstructure:"enabled_products"`
 
 	// Env corresponds to the JSON schema field "env".
-	Env CiEnv `json:"env" yaml:"env" mapstructure:"env"`
+	Env map[string]string `json:"env" yaml:"env" mapstructure:"env"`
 
 	// IgnoredFiles corresponds to the JSON schema field "ignored_files".
 	IgnoredFiles []string `json:"ignored_files" yaml:"ignored_files" mapstructure:"ignored_files"`
+
+	// PathToTransitivity corresponds to the JSON schema field "path_to_transitivity".
+	PathToTransitivity *bool `json:"path_to_transitivity,omitempty" yaml:"path_to_transitivity,omitempty" mapstructure:"path_to_transitivity,omitempty"`
+
+	// ScanAllDepsInDiffScan corresponds to the JSON schema field
+	// "scan_all_deps_in_diff_scan".
+	ScanAllDepsInDiffScan *bool `json:"scan_all_deps_in_diff_scan,omitempty" yaml:"scan_all_deps_in_diff_scan,omitempty" mapstructure:"scan_all_deps_in_diff_scan,omitempty"`
+
+	// SymbolAnalysis corresponds to the JSON schema field "symbol_analysis".
+	SymbolAnalysis *bool `json:"symbol_analysis,omitempty" yaml:"symbol_analysis,omitempty" mapstructure:"symbol_analysis,omitempty"`
+
+	// TransitiveReachabilityEnabled corresponds to the JSON schema field
+	// "transitive_reachability_enabled".
+	TransitiveReachabilityEnabled *bool `json:"transitive_reachability_enabled,omitempty" yaml:"transitive_reachability_enabled,omitempty" mapstructure:"transitive_reachability_enabled,omitempty"`
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiConfig) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["autofix"]; !ok || v == nil {
-		return fmt.Errorf("field autofix in CiConfig: required")
-	}
-	if v, ok := raw["enabled_products"]; !ok || v == nil {
-		return fmt.Errorf("field enabled_products in CiConfig: required")
-	}
-	if v, ok := raw["env"]; !ok || v == nil {
-		return fmt.Errorf("field env in CiConfig: required")
-	}
-	if v, ok := raw["ignored_files"]; !ok || v == nil {
-		return fmt.Errorf("field ignored_files in CiConfig: required")
-	}
-	type Plain CiConfig
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiConfig(plain)
-	return nil
-}
+type CiConfigEnabledProductsElem interface{}
 
 type CiConfigFromCloud struct {
+	// Actions corresponds to the JSON schema field "actions".
+	Actions []CiConfigFromCloudActionsElem `json:"actions,omitempty" yaml:"actions,omitempty" mapstructure:"actions,omitempty"`
+
 	// DirsConfig corresponds to the JSON schema field "dirs_config".
 	DirsConfig [][]interface{} `json:"dirs_config,omitempty" yaml:"dirs_config,omitempty" mapstructure:"dirs_config,omitempty"`
 
@@ -102,27 +140,25 @@ type CiConfigFromCloud struct {
 	RepoConfig CiConfig `json:"repo_config" yaml:"repo_config" mapstructure:"repo_config"`
 }
 
+type CiConfigFromCloudActionsElem interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CiConfigFromCloud) UnmarshalJSON(b []byte) error {
+func (j *CiConfigFromCloud) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["repo_config"]; !ok || v == nil {
+	if _, ok := raw["repo_config"]; raw != nil && !ok {
 		return fmt.Errorf("field repo_config in CiConfigFromCloud: required")
 	}
 	type Plain CiConfigFromCloud
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = CiConfigFromCloud(plain)
 	return nil
 }
-
-type Tag string
-
-type Version string
 
 type CiConfigFromRepo struct {
 	// Tags corresponds to the JSON schema field "tags".
@@ -132,237 +168,367 @@ type CiConfigFromRepo struct {
 	Version *Version `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version,omitempty"`
 }
 
-type FoundDependencyAllowedHashes map[string][]string
-
-type DependencyChild struct {
-	// Package corresponds to the JSON schema field "package".
-	Package string `json:"package" yaml:"package" mapstructure:"package"`
-
-	// Version corresponds to the JSON schema field "version".
-	Version string `json:"version" yaml:"version" mapstructure:"version"`
-}
-
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *DependencyChild) UnmarshalJSON(b []byte) error {
+func (j *CiConfig) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["package"]; !ok || v == nil {
-		return fmt.Errorf("field package in DependencyChild: required")
+	if _, ok := raw["enabled_products"]; raw != nil && !ok {
+		return fmt.Errorf("field enabled_products in CiConfig: required")
 	}
-	if v, ok := raw["version"]; !ok || v == nil {
-		return fmt.Errorf("field version in DependencyChild: required")
+	if _, ok := raw["env"]; raw != nil && !ok {
+		return fmt.Errorf("field env in CiConfig: required")
 	}
-	type Plain DependencyChild
+	if _, ok := raw["ignored_files"]; raw != nil && !ok {
+		return fmt.Errorf("field ignored_files in CiConfig: required")
+	}
+	type Plain CiConfig
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = DependencyChild(plain)
+	*j = CiConfig(plain)
 	return nil
 }
 
-type FoundDependencyEcosystem interface{}
+type CiScanComplete struct {
+	// Dependencies corresponds to the JSON schema field "dependencies".
+	Dependencies map[string][]FoundDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty" mapstructure:"dependencies,omitempty"`
 
-type FoundDependencyTransitivity interface{}
+	// DependencyParserErrors corresponds to the JSON schema field
+	// "dependency_parser_errors".
+	DependencyParserErrors []DependencyParserError `json:"dependency_parser_errors,omitempty" yaml:"dependency_parser_errors,omitempty" mapstructure:"dependency_parser_errors,omitempty"`
 
-type FoundDependency struct {
-	// AllowedHashes corresponds to the JSON schema field "allowed_hashes".
-	AllowedHashes FoundDependencyAllowedHashes `json:"allowed_hashes" yaml:"allowed_hashes" mapstructure:"allowed_hashes"`
+	// ExitCode corresponds to the JSON schema field "exit_code".
+	ExitCode int `json:"exit_code" yaml:"exit_code" mapstructure:"exit_code"`
 
-	// Children corresponds to the JSON schema field "children".
-	Children []DependencyChild `json:"children,omitempty" yaml:"children,omitempty" mapstructure:"children,omitempty"`
+	// FinalAttempt corresponds to the JSON schema field "final_attempt".
+	FinalAttempt *bool `json:"final_attempt,omitempty" yaml:"final_attempt,omitempty" mapstructure:"final_attempt,omitempty"`
 
-	// Ecosystem corresponds to the JSON schema field "ecosystem".
-	Ecosystem FoundDependencyEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+	// Stats corresponds to the JSON schema field "stats".
+	Stats CiScanCompleteStats `json:"stats" yaml:"stats" mapstructure:"stats"`
 
-	// LineNumber corresponds to the JSON schema field "line_number".
-	LineNumber *int `json:"line_number,omitempty" yaml:"line_number,omitempty" mapstructure:"line_number,omitempty"`
+	// TaskId corresponds to the JSON schema field "task_id".
+	TaskId *string `json:"task_id,omitempty" yaml:"task_id,omitempty" mapstructure:"task_id,omitempty"`
+}
 
-	// Package corresponds to the JSON schema field "package".
-	Package string `json:"package" yaml:"package" mapstructure:"package"`
+type CiScanCompleteResponse struct {
+	// AppBlockOverride corresponds to the JSON schema field "app_block_override".
+	AppBlockOverride *bool `json:"app_block_override,omitempty" yaml:"app_block_override,omitempty" mapstructure:"app_block_override,omitempty"`
 
-	// ResolvedUrl corresponds to the JSON schema field "resolved_url".
-	ResolvedUrl *string `json:"resolved_url,omitempty" yaml:"resolved_url,omitempty" mapstructure:"resolved_url,omitempty"`
+	// AppBlockReason corresponds to the JSON schema field "app_block_reason".
+	AppBlockReason *string `json:"app_block_reason,omitempty" yaml:"app_block_reason,omitempty" mapstructure:"app_block_reason,omitempty"`
 
-	// Transitivity corresponds to the JSON schema field "transitivity".
-	Transitivity FoundDependencyTransitivity `json:"transitivity" yaml:"transitivity" mapstructure:"transitivity"`
+	// AppBlockingMatchBasedIds corresponds to the JSON schema field
+	// "app_blocking_match_based_ids".
+	AppBlockingMatchBasedIds []MatchBasedId `json:"app_blocking_match_based_ids,omitempty" yaml:"app_blocking_match_based_ids,omitempty" mapstructure:"app_blocking_match_based_ids,omitempty"`
 
-	// Version corresponds to the JSON schema field "version".
-	Version string `json:"version" yaml:"version" mapstructure:"version"`
+	// Success corresponds to the JSON schema field "success".
+	Success bool `json:"success" yaml:"success" mapstructure:"success"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *FoundDependency) UnmarshalJSON(b []byte) error {
+func (j *CiScanCompleteResponse) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["allowed_hashes"]; !ok || v == nil {
-		return fmt.Errorf("field allowed_hashes in FoundDependency: required")
+	if _, ok := raw["success"]; raw != nil && !ok {
+		return fmt.Errorf("field success in CiScanCompleteResponse: required")
 	}
-	if v, ok := raw["ecosystem"]; !ok || v == nil {
-		return fmt.Errorf("field ecosystem in FoundDependency: required")
-	}
-	if v, ok := raw["package"]; !ok || v == nil {
-		return fmt.Errorf("field package in FoundDependency: required")
-	}
-	if v, ok := raw["transitivity"]; !ok || v == nil {
-		return fmt.Errorf("field transitivity in FoundDependency: required")
-	}
-	if v, ok := raw["version"]; !ok || v == nil {
-		return fmt.Errorf("field version in FoundDependency: required")
-	}
-	type Plain FoundDependency
+	type Plain CiScanCompleteResponse
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = FoundDependency(plain)
+	*j = CiScanCompleteResponse(plain)
 	return nil
 }
 
-type CiScanDependencies map[string][]FoundDependency
+type CiScanCompleteStats struct {
+	// EngineRequested corresponds to the JSON schema field "engine_requested".
+	EngineRequested *string `json:"engine_requested,omitempty" yaml:"engine_requested,omitempty" mapstructure:"engine_requested,omitempty"`
 
-type DependencyParserErrorParser interface{}
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []CliError `json:"errors" yaml:"errors" mapstructure:"errors"`
 
-type DependencyParserError struct {
-	// Col corresponds to the JSON schema field "col".
-	Col *int `json:"col,omitempty" yaml:"col,omitempty" mapstructure:"col,omitempty"`
+	// Findings corresponds to the JSON schema field "findings".
+	Findings int `json:"findings" yaml:"findings" mapstructure:"findings"`
 
-	// Line corresponds to the JSON schema field "line".
-	Line *int `json:"line,omitempty" yaml:"line,omitempty" mapstructure:"line,omitempty"`
+	// FindingsByProduct corresponds to the JSON schema field "findings_by_product".
+	FindingsByProduct map[string]int `json:"findings_by_product,omitempty" yaml:"findings_by_product,omitempty" mapstructure:"findings_by_product,omitempty"`
 
-	// Parser corresponds to the JSON schema field "parser".
-	Parser DependencyParserErrorParser `json:"parser" yaml:"parser" mapstructure:"parser"`
+	// LockfileScanInfo corresponds to the JSON schema field "lockfile_scan_info".
+	LockfileScanInfo map[string]int `json:"lockfile_scan_info" yaml:"lockfile_scan_info" mapstructure:"lockfile_scan_info"`
 
-	// Path corresponds to the JSON schema field "path".
-	Path string `json:"path" yaml:"path" mapstructure:"path"`
+	// ParseRate corresponds to the JSON schema field "parse_rate".
+	ParseRate map[string]ParsingStats `json:"parse_rate" yaml:"parse_rate" mapstructure:"parse_rate"`
 
-	// Reason corresponds to the JSON schema field "reason".
-	Reason string `json:"reason" yaml:"reason" mapstructure:"reason"`
+	// SupplyChainStats corresponds to the JSON schema field "supply_chain_stats".
+	SupplyChainStats *SupplyChainStats `json:"supply_chain_stats,omitempty" yaml:"supply_chain_stats,omitempty" mapstructure:"supply_chain_stats,omitempty"`
 
-	// Text corresponds to the JSON schema field "text".
-	Text *string `json:"text,omitempty" yaml:"text,omitempty" mapstructure:"text,omitempty"`
+	// TotalTime corresponds to the JSON schema field "total_time".
+	TotalTime float64 `json:"total_time" yaml:"total_time" mapstructure:"total_time"`
+
+	// UnsupportedExts corresponds to the JSON schema field "unsupported_exts".
+	UnsupportedExts map[string]int `json:"unsupported_exts" yaml:"unsupported_exts" mapstructure:"unsupported_exts"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *DependencyParserError) UnmarshalJSON(b []byte) error {
+func (j *CiScanCompleteStats) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["parser"]; !ok || v == nil {
-		return fmt.Errorf("field parser in DependencyParserError: required")
+	if _, ok := raw["errors"]; raw != nil && !ok {
+		return fmt.Errorf("field errors in CiScanCompleteStats: required")
 	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in DependencyParserError: required")
+	if _, ok := raw["findings"]; raw != nil && !ok {
+		return fmt.Errorf("field findings in CiScanCompleteStats: required")
 	}
-	if v, ok := raw["reason"]; !ok || v == nil {
-		return fmt.Errorf("field reason in DependencyParserError: required")
+	if _, ok := raw["lockfile_scan_info"]; raw != nil && !ok {
+		return fmt.Errorf("field lockfile_scan_info in CiScanCompleteStats: required")
 	}
-	type Plain DependencyParserError
+	if _, ok := raw["parse_rate"]; raw != nil && !ok {
+		return fmt.Errorf("field parse_rate in CiScanCompleteStats: required")
+	}
+	if _, ok := raw["total_time"]; raw != nil && !ok {
+		return fmt.Errorf("field total_time in CiScanCompleteStats: required")
+	}
+	if _, ok := raw["unsupported_exts"]; raw != nil && !ok {
+		return fmt.Errorf("field unsupported_exts in CiScanCompleteStats: required")
+	}
+	type Plain CiScanCompleteStats
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = DependencyParserError(plain)
+	*j = CiScanCompleteStats(plain)
 	return nil
-}
-
-type CliErrorLevel interface{}
-
-type Fpath string
-
-type RuleId string
-
-type Position struct {
-	// Col corresponds to the JSON schema field "col".
-	Col int `json:"col" yaml:"col" mapstructure:"col"`
-
-	// Line corresponds to the JSON schema field "line".
-	Line int `json:"line" yaml:"line" mapstructure:"line"`
-
-	// Offset corresponds to the JSON schema field "offset".
-	Offset *int `json:"offset,omitempty" yaml:"offset,omitempty" mapstructure:"offset,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *Position) UnmarshalJSON(b []byte) error {
+func (j *CiScanComplete) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["col"]; !ok || v == nil {
-		return fmt.Errorf("field col in Position: required")
+	if _, ok := raw["exit_code"]; raw != nil && !ok {
+		return fmt.Errorf("field exit_code in CiScanComplete: required")
 	}
-	if v, ok := raw["line"]; !ok || v == nil {
-		return fmt.Errorf("field line in Position: required")
+	if _, ok := raw["stats"]; raw != nil && !ok {
+		return fmt.Errorf("field stats in CiScanComplete: required")
 	}
-	type Plain Position
+	type Plain CiScanComplete
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = Position(plain)
+	*j = CiScanComplete(plain)
 	return nil
 }
 
-type ErrorSpan struct {
-	// ConfigEnd corresponds to the JSON schema field "config_end".
-	ConfigEnd *Position `json:"config_end,omitempty" yaml:"config_end,omitempty" mapstructure:"config_end,omitempty"`
+type CiScanFailure struct {
+	// ExitCode corresponds to the JSON schema field "exit_code".
+	ExitCode int `json:"exit_code" yaml:"exit_code" mapstructure:"exit_code"`
 
-	// ConfigPath corresponds to the JSON schema field "config_path".
-	ConfigPath []string `json:"config_path,omitempty" yaml:"config_path,omitempty" mapstructure:"config_path,omitempty"`
-
-	// ConfigStart corresponds to the JSON schema field "config_start".
-	ConfigStart *Position `json:"config_start,omitempty" yaml:"config_start,omitempty" mapstructure:"config_start,omitempty"`
-
-	// ContextEnd corresponds to the JSON schema field "context_end".
-	ContextEnd *Position `json:"context_end,omitempty" yaml:"context_end,omitempty" mapstructure:"context_end,omitempty"`
-
-	// ContextStart corresponds to the JSON schema field "context_start".
-	ContextStart *Position `json:"context_start,omitempty" yaml:"context_start,omitempty" mapstructure:"context_start,omitempty"`
-
-	// End corresponds to the JSON schema field "end".
-	End Position `json:"end" yaml:"end" mapstructure:"end"`
-
-	// File corresponds to the JSON schema field "file".
-	File Fpath `json:"file" yaml:"file" mapstructure:"file"`
-
-	// SourceHash corresponds to the JSON schema field "source_hash".
-	SourceHash *string `json:"source_hash,omitempty" yaml:"source_hash,omitempty" mapstructure:"source_hash,omitempty"`
-
-	// Start corresponds to the JSON schema field "start".
-	Start Position `json:"start" yaml:"start" mapstructure:"start"`
+	// Stderr corresponds to the JSON schema field "stderr".
+	Stderr string `json:"stderr" yaml:"stderr" mapstructure:"stderr"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ErrorSpan) UnmarshalJSON(b []byte) error {
+func (j *CiScanFailure) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["end"]; !ok || v == nil {
-		return fmt.Errorf("field end in ErrorSpan: required")
+	if _, ok := raw["exit_code"]; raw != nil && !ok {
+		return fmt.Errorf("field exit_code in CiScanFailure: required")
 	}
-	if v, ok := raw["file"]; !ok || v == nil {
-		return fmt.Errorf("field file in ErrorSpan: required")
+	if _, ok := raw["stderr"]; raw != nil && !ok {
+		return fmt.Errorf("field stderr in CiScanFailure: required")
 	}
-	if v, ok := raw["start"]; !ok || v == nil {
-		return fmt.Errorf("field start in ErrorSpan: required")
-	}
-	type Plain ErrorSpan
+	type Plain CiScanFailure
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = ErrorSpan(plain)
+	*j = CiScanFailure(plain)
 	return nil
 }
 
-type CliErrorType interface{}
+type CiScanMetadata struct {
+	// DeploymentId corresponds to the JSON schema field "deployment_id".
+	DeploymentId int `json:"deployment_id" yaml:"deployment_id" mapstructure:"deployment_id"`
+
+	// EnabledProducts corresponds to the JSON schema field "enabled_products".
+	EnabledProducts []CiScanMetadataEnabledProductsElem `json:"enabled_products" yaml:"enabled_products" mapstructure:"enabled_products"`
+
+	// GitCommit corresponds to the JSON schema field "git_commit".
+	GitCommit Sha1 `json:"git_commit" yaml:"git_commit" mapstructure:"git_commit"`
+
+	// GitRef corresponds to the JSON schema field "git_ref".
+	GitRef *string `json:"git_ref" yaml:"git_ref" mapstructure:"git_ref"`
+
+	// RepositoryId corresponds to the JSON schema field "repository_id".
+	RepositoryId int `json:"repository_id" yaml:"repository_id" mapstructure:"repository_id"`
+
+	// RepositoryRefId corresponds to the JSON schema field "repository_ref_id".
+	RepositoryRefId int `json:"repository_ref_id" yaml:"repository_ref_id" mapstructure:"repository_ref_id"`
+
+	// ScanId corresponds to the JSON schema field "scan_id".
+	ScanId int `json:"scan_id" yaml:"scan_id" mapstructure:"scan_id"`
+}
+
+type CiScanMetadataEnabledProductsElem interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CiScanMetadata) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["deployment_id"]; raw != nil && !ok {
+		return fmt.Errorf("field deployment_id in CiScanMetadata: required")
+	}
+	if _, ok := raw["enabled_products"]; raw != nil && !ok {
+		return fmt.Errorf("field enabled_products in CiScanMetadata: required")
+	}
+	if _, ok := raw["git_commit"]; raw != nil && !ok {
+		return fmt.Errorf("field git_commit in CiScanMetadata: required")
+	}
+	if _, ok := raw["git_ref"]; raw != nil && !ok {
+		return fmt.Errorf("field git_ref in CiScanMetadata: required")
+	}
+	if _, ok := raw["repository_id"]; raw != nil && !ok {
+		return fmt.Errorf("field repository_id in CiScanMetadata: required")
+	}
+	if _, ok := raw["repository_ref_id"]; raw != nil && !ok {
+		return fmt.Errorf("field repository_ref_id in CiScanMetadata: required")
+	}
+	if _, ok := raw["scan_id"]; raw != nil && !ok {
+		return fmt.Errorf("field scan_id in CiScanMetadata: required")
+	}
+	type Plain CiScanMetadata
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CiScanMetadata(plain)
+	return nil
+}
+
+type CiScanResults struct {
+	// Contributions corresponds to the JSON schema field "contributions".
+	Contributions Contributions `json:"contributions,omitempty" yaml:"contributions,omitempty" mapstructure:"contributions,omitempty"`
+
+	// Dependencies corresponds to the JSON schema field "dependencies".
+	Dependencies map[string][]FoundDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty" mapstructure:"dependencies,omitempty"`
+
+	// Findings corresponds to the JSON schema field "findings".
+	Findings []Finding `json:"findings" yaml:"findings" mapstructure:"findings"`
+
+	// Ignores corresponds to the JSON schema field "ignores".
+	Ignores []Finding `json:"ignores" yaml:"ignores" mapstructure:"ignores"`
+
+	// Metadata corresponds to the JSON schema field "metadata".
+	Metadata *CiScanMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
+
+	// RenamedPaths corresponds to the JSON schema field "renamed_paths".
+	RenamedPaths []Fpath `json:"renamed_paths" yaml:"renamed_paths" mapstructure:"renamed_paths"`
+
+	// RuleIds corresponds to the JSON schema field "rule_ids".
+	RuleIds []RuleId `json:"rule_ids" yaml:"rule_ids" mapstructure:"rule_ids"`
+
+	// SearchedPaths corresponds to the JSON schema field "searched_paths".
+	SearchedPaths []Fpath `json:"searched_paths" yaml:"searched_paths" mapstructure:"searched_paths"`
+
+	// Token corresponds to the JSON schema field "token".
+	Token *string `json:"token" yaml:"token" mapstructure:"token"`
+}
+
+type CiScanResultsResponse struct {
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []CiScanResultsResponseError `json:"errors" yaml:"errors" mapstructure:"errors"`
+
+	// TaskId corresponds to the JSON schema field "task_id".
+	TaskId *string `json:"task_id,omitempty" yaml:"task_id,omitempty" mapstructure:"task_id,omitempty"`
+}
+
+type CiScanResultsResponseError struct {
+	// Message corresponds to the JSON schema field "message".
+	Message string `json:"message" yaml:"message" mapstructure:"message"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CiScanResultsResponseError) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["message"]; raw != nil && !ok {
+		return fmt.Errorf("field message in CiScanResultsResponseError: required")
+	}
+	type Plain CiScanResultsResponseError
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CiScanResultsResponseError(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CiScanResultsResponse) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["errors"]; raw != nil && !ok {
+		return fmt.Errorf("field errors in CiScanResultsResponse: required")
+	}
+	type Plain CiScanResultsResponse
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CiScanResultsResponse(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CiScanResults) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["findings"]; raw != nil && !ok {
+		return fmt.Errorf("field findings in CiScanResults: required")
+	}
+	if _, ok := raw["ignores"]; raw != nil && !ok {
+		return fmt.Errorf("field ignores in CiScanResults: required")
+	}
+	if _, ok := raw["renamed_paths"]; raw != nil && !ok {
+		return fmt.Errorf("field renamed_paths in CiScanResults: required")
+	}
+	if _, ok := raw["rule_ids"]; raw != nil && !ok {
+		return fmt.Errorf("field rule_ids in CiScanResults: required")
+	}
+	if _, ok := raw["searched_paths"]; raw != nil && !ok {
+		return fmt.Errorf("field searched_paths in CiScanResults: required")
+	}
+	if _, ok := raw["token"]; raw != nil && !ok {
+		return fmt.Errorf("field token in CiScanResults: required")
+	}
+	type Plain CiScanResults
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CiScanResults(plain)
+	return nil
+}
 
 type CliError struct {
 	// Code corresponds to the JSON schema field "code".
@@ -396,902 +562,31 @@ type CliError struct {
 	Type CliErrorType `json:"type" yaml:"type" mapstructure:"type"`
 }
 
+type CliErrorLevel interface{}
+
+type CliErrorType interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CliError) UnmarshalJSON(b []byte) error {
+func (j *CliError) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["code"]; !ok || v == nil {
+	if _, ok := raw["code"]; raw != nil && !ok {
 		return fmt.Errorf("field code in CliError: required")
 	}
-	if v, ok := raw["level"]; !ok || v == nil {
+	if _, ok := raw["level"]; raw != nil && !ok {
 		return fmt.Errorf("field level in CliError: required")
 	}
-	if v, ok := raw["type"]; !ok || v == nil {
+	if _, ok := raw["type"]; raw != nil && !ok {
 		return fmt.Errorf("field type in CliError: required")
 	}
 	type Plain CliError
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = CliError(plain)
-	return nil
-}
-
-type CiScanCompleteStatsLockfileScanInfo map[string]int
-
-type ParsingStats struct {
-	// BytesParsed corresponds to the JSON schema field "bytes_parsed".
-	BytesParsed int `json:"bytes_parsed" yaml:"bytes_parsed" mapstructure:"bytes_parsed"`
-
-	// NumBytes corresponds to the JSON schema field "num_bytes".
-	NumBytes int `json:"num_bytes" yaml:"num_bytes" mapstructure:"num_bytes"`
-
-	// NumTargets corresponds to the JSON schema field "num_targets".
-	NumTargets int `json:"num_targets" yaml:"num_targets" mapstructure:"num_targets"`
-
-	// TargetsParsed corresponds to the JSON schema field "targets_parsed".
-	TargetsParsed int `json:"targets_parsed" yaml:"targets_parsed" mapstructure:"targets_parsed"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ParsingStats) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["bytes_parsed"]; !ok || v == nil {
-		return fmt.Errorf("field bytes_parsed in ParsingStats: required")
-	}
-	if v, ok := raw["num_bytes"]; !ok || v == nil {
-		return fmt.Errorf("field num_bytes in ParsingStats: required")
-	}
-	if v, ok := raw["num_targets"]; !ok || v == nil {
-		return fmt.Errorf("field num_targets in ParsingStats: required")
-	}
-	if v, ok := raw["targets_parsed"]; !ok || v == nil {
-		return fmt.Errorf("field targets_parsed in ParsingStats: required")
-	}
-	type Plain ParsingStats
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ParsingStats(plain)
-	return nil
-}
-
-type CiScanCompleteStatsParseRate map[string]ParsingStats
-
-type CiScanCompleteStatsUnsupportedExts map[string]int
-
-type CiScanCompleteStats struct {
-	// EngineRequested corresponds to the JSON schema field "engine_requested".
-	EngineRequested *string `json:"engine_requested,omitempty" yaml:"engine_requested,omitempty" mapstructure:"engine_requested,omitempty"`
-
-	// Errors corresponds to the JSON schema field "errors".
-	Errors []CliError `json:"errors" yaml:"errors" mapstructure:"errors"`
-
-	// Findings corresponds to the JSON schema field "findings".
-	Findings int `json:"findings" yaml:"findings" mapstructure:"findings"`
-
-	// LockfileScanInfo corresponds to the JSON schema field "lockfile_scan_info".
-	LockfileScanInfo CiScanCompleteStatsLockfileScanInfo `json:"lockfile_scan_info" yaml:"lockfile_scan_info" mapstructure:"lockfile_scan_info"`
-
-	// ParseRate corresponds to the JSON schema field "parse_rate".
-	ParseRate CiScanCompleteStatsParseRate `json:"parse_rate" yaml:"parse_rate" mapstructure:"parse_rate"`
-
-	// TotalTime corresponds to the JSON schema field "total_time".
-	TotalTime float64 `json:"total_time" yaml:"total_time" mapstructure:"total_time"`
-
-	// UnsupportedExts corresponds to the JSON schema field "unsupported_exts".
-	UnsupportedExts CiScanCompleteStatsUnsupportedExts `json:"unsupported_exts" yaml:"unsupported_exts" mapstructure:"unsupported_exts"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanCompleteStats) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["errors"]; !ok || v == nil {
-		return fmt.Errorf("field errors in CiScanCompleteStats: required")
-	}
-	if v, ok := raw["findings"]; !ok || v == nil {
-		return fmt.Errorf("field findings in CiScanCompleteStats: required")
-	}
-	if v, ok := raw["lockfile_scan_info"]; !ok || v == nil {
-		return fmt.Errorf("field lockfile_scan_info in CiScanCompleteStats: required")
-	}
-	if v, ok := raw["parse_rate"]; !ok || v == nil {
-		return fmt.Errorf("field parse_rate in CiScanCompleteStats: required")
-	}
-	if v, ok := raw["total_time"]; !ok || v == nil {
-		return fmt.Errorf("field total_time in CiScanCompleteStats: required")
-	}
-	if v, ok := raw["unsupported_exts"]; !ok || v == nil {
-		return fmt.Errorf("field unsupported_exts in CiScanCompleteStats: required")
-	}
-	type Plain CiScanCompleteStats
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanCompleteStats(plain)
-	return nil
-}
-
-type CiScanComplete struct {
-	// Dependencies corresponds to the JSON schema field "dependencies".
-	Dependencies CiScanDependencies `json:"dependencies,omitempty" yaml:"dependencies,omitempty" mapstructure:"dependencies,omitempty"`
-
-	// DependencyParserErrors corresponds to the JSON schema field
-	// "dependency_parser_errors".
-	DependencyParserErrors []DependencyParserError `json:"dependency_parser_errors,omitempty" yaml:"dependency_parser_errors,omitempty" mapstructure:"dependency_parser_errors,omitempty"`
-
-	// ExitCode corresponds to the JSON schema field "exit_code".
-	ExitCode int `json:"exit_code" yaml:"exit_code" mapstructure:"exit_code"`
-
-	// FinalAttempt corresponds to the JSON schema field "final_attempt".
-	FinalAttempt *bool `json:"final_attempt,omitempty" yaml:"final_attempt,omitempty" mapstructure:"final_attempt,omitempty"`
-
-	// Stats corresponds to the JSON schema field "stats".
-	Stats CiScanCompleteStats `json:"stats" yaml:"stats" mapstructure:"stats"`
-
-	// TaskId corresponds to the JSON schema field "task_id".
-	TaskId *string `json:"task_id,omitempty" yaml:"task_id,omitempty" mapstructure:"task_id,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanComplete) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["exit_code"]; !ok || v == nil {
-		return fmt.Errorf("field exit_code in CiScanComplete: required")
-	}
-	if v, ok := raw["stats"]; !ok || v == nil {
-		return fmt.Errorf("field stats in CiScanComplete: required")
-	}
-	type Plain CiScanComplete
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanComplete(plain)
-	return nil
-}
-
-type CiScanCompleteResponse struct {
-	// AppBlockOverride corresponds to the JSON schema field "app_block_override".
-	AppBlockOverride *bool `json:"app_block_override,omitempty" yaml:"app_block_override,omitempty" mapstructure:"app_block_override,omitempty"`
-
-	// AppBlockReason corresponds to the JSON schema field "app_block_reason".
-	AppBlockReason *string `json:"app_block_reason,omitempty" yaml:"app_block_reason,omitempty" mapstructure:"app_block_reason,omitempty"`
-
-	// Success corresponds to the JSON schema field "success".
-	Success bool `json:"success" yaml:"success" mapstructure:"success"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanCompleteResponse) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["success"]; !ok || v == nil {
-		return fmt.Errorf("field success in CiScanCompleteResponse: required")
-	}
-	type Plain CiScanCompleteResponse
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanCompleteResponse(plain)
-	return nil
-}
-
-type CiScanFailure struct {
-	// ExitCode corresponds to the JSON schema field "exit_code".
-	ExitCode int `json:"exit_code" yaml:"exit_code" mapstructure:"exit_code"`
-
-	// Stderr corresponds to the JSON schema field "stderr".
-	Stderr string `json:"stderr" yaml:"stderr" mapstructure:"stderr"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanFailure) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["exit_code"]; !ok || v == nil {
-		return fmt.Errorf("field exit_code in CiScanFailure: required")
-	}
-	if v, ok := raw["stderr"]; !ok || v == nil {
-		return fmt.Errorf("field stderr in CiScanFailure: required")
-	}
-	type Plain CiScanFailure
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanFailure(plain)
-	return nil
-}
-
-type CiConfigEnabledProductsElem interface{}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Contributor) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["commit_author_email"]; !ok || v == nil {
-		return fmt.Errorf("field commit_author_email in Contributor: required")
-	}
-	if v, ok := raw["commit_author_name"]; !ok || v == nil {
-		return fmt.Errorf("field commit_author_name in Contributor: required")
-	}
-	type Plain Contributor
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Contributor(plain)
-	return nil
-}
-
-type Contribution struct {
-	// CommitHash corresponds to the JSON schema field "commit_hash".
-	CommitHash string `json:"commit_hash" yaml:"commit_hash" mapstructure:"commit_hash"`
-
-	// CommitTimestamp corresponds to the JSON schema field "commit_timestamp".
-	CommitTimestamp string `json:"commit_timestamp" yaml:"commit_timestamp" mapstructure:"commit_timestamp"`
-
-	// Contributor corresponds to the JSON schema field "contributor".
-	Contributor Contributor `json:"contributor" yaml:"contributor" mapstructure:"contributor"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Contribution) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["commit_hash"]; !ok || v == nil {
-		return fmt.Errorf("field commit_hash in Contribution: required")
-	}
-	if v, ok := raw["commit_timestamp"]; !ok || v == nil {
-		return fmt.Errorf("field commit_timestamp in Contribution: required")
-	}
-	if v, ok := raw["contributor"]; !ok || v == nil {
-		return fmt.Errorf("field contributor in Contribution: required")
-	}
-	type Plain Contribution
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Contribution(plain)
-	return nil
-}
-
-type Contributions []Contribution
-
-type Location struct {
-	// End corresponds to the JSON schema field "end".
-	End Position `json:"end" yaml:"end" mapstructure:"end"`
-
-	// Path corresponds to the JSON schema field "path".
-	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
-
-	// Start corresponds to the JSON schema field "start".
-	Start Position `json:"start" yaml:"start" mapstructure:"start"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Location) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["end"]; !ok || v == nil {
-		return fmt.Errorf("field end in Location: required")
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in Location: required")
-	}
-	if v, ok := raw["start"]; !ok || v == nil {
-		return fmt.Errorf("field start in Location: required")
-	}
-	type Plain Location
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Location(plain)
-	return nil
-}
-
-type MatchIntermediateVar struct {
-	// Content corresponds to the JSON schema field "content".
-	Content string `json:"content" yaml:"content" mapstructure:"content"`
-
-	// Location corresponds to the JSON schema field "location".
-	Location Location `json:"location" yaml:"location" mapstructure:"location"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *MatchIntermediateVar) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["content"]; !ok || v == nil {
-		return fmt.Errorf("field content in MatchIntermediateVar: required")
-	}
-	if v, ok := raw["location"]; !ok || v == nil {
-		return fmt.Errorf("field location in MatchIntermediateVar: required")
-	}
-	type Plain MatchIntermediateVar
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = MatchIntermediateVar(plain)
-	return nil
-}
-
-type MatchDataflowTraceTaintSink interface{}
-
-type MatchDataflowTraceTaintSource interface{}
-
-type MatchDataflowTrace struct {
-	// IntermediateVars corresponds to the JSON schema field "intermediate_vars".
-	IntermediateVars []MatchIntermediateVar `json:"intermediate_vars,omitempty" yaml:"intermediate_vars,omitempty" mapstructure:"intermediate_vars,omitempty"`
-
-	// TaintSink corresponds to the JSON schema field "taint_sink".
-	TaintSink MatchDataflowTraceTaintSink `json:"taint_sink,omitempty" yaml:"taint_sink,omitempty" mapstructure:"taint_sink,omitempty"`
-
-	// TaintSource corresponds to the JSON schema field "taint_source".
-	TaintSource MatchDataflowTraceTaintSource `json:"taint_source,omitempty" yaml:"taint_source,omitempty" mapstructure:"taint_source,omitempty"`
-}
-
-type FindingHashes struct {
-	// CodeHash corresponds to the JSON schema field "code_hash".
-	CodeHash string `json:"code_hash" yaml:"code_hash" mapstructure:"code_hash"`
-
-	// EndLineHash corresponds to the JSON schema field "end_line_hash".
-	EndLineHash string `json:"end_line_hash" yaml:"end_line_hash" mapstructure:"end_line_hash"`
-
-	// PatternHash corresponds to the JSON schema field "pattern_hash".
-	PatternHash string `json:"pattern_hash" yaml:"pattern_hash" mapstructure:"pattern_hash"`
-
-	// StartLineHash corresponds to the JSON schema field "start_line_hash".
-	StartLineHash string `json:"start_line_hash" yaml:"start_line_hash" mapstructure:"start_line_hash"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *FindingHashes) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["code_hash"]; !ok || v == nil {
-		return fmt.Errorf("field code_hash in FindingHashes: required")
-	}
-	if v, ok := raw["end_line_hash"]; !ok || v == nil {
-		return fmt.Errorf("field end_line_hash in FindingHashes: required")
-	}
-	if v, ok := raw["pattern_hash"]; !ok || v == nil {
-		return fmt.Errorf("field pattern_hash in FindingHashes: required")
-	}
-	if v, ok := raw["start_line_hash"]; !ok || v == nil {
-		return fmt.Errorf("field start_line_hash in FindingHashes: required")
-	}
-	type Plain FindingHashes
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = FindingHashes(plain)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *MetavarValue) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["abstract_content"]; !ok || v == nil {
-		return fmt.Errorf("field abstract_content in MetavarValue: required")
-	}
-	if v, ok := raw["end"]; !ok || v == nil {
-		return fmt.Errorf("field end in MetavarValue: required")
-	}
-	if v, ok := raw["start"]; !ok || v == nil {
-		return fmt.Errorf("field start in MetavarValue: required")
-	}
-	type Plain MetavarValue
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = MetavarValue(plain)
-	return nil
-}
-
-type DependencyPatternEcosystem interface{}
-
-type DependencyPattern struct {
-	// Ecosystem corresponds to the JSON schema field "ecosystem".
-	Ecosystem DependencyPatternEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
-
-	// Package corresponds to the JSON schema field "package".
-	Package string `json:"package" yaml:"package" mapstructure:"package"`
-
-	// SemverRange corresponds to the JSON schema field "semver_range".
-	SemverRange string `json:"semver_range" yaml:"semver_range" mapstructure:"semver_range"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *DependencyPattern) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["ecosystem"]; !ok || v == nil {
-		return fmt.Errorf("field ecosystem in DependencyPattern: required")
-	}
-	if v, ok := raw["package"]; !ok || v == nil {
-		return fmt.Errorf("field package in DependencyPattern: required")
-	}
-	if v, ok := raw["semver_range"]; !ok || v == nil {
-		return fmt.Errorf("field semver_range in DependencyPattern: required")
-	}
-	type Plain DependencyPattern
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = DependencyPattern(plain)
-	return nil
-}
-
-type DependencyMatch struct {
-	// DependencyPattern corresponds to the JSON schema field "dependency_pattern".
-	DependencyPattern DependencyPattern `json:"dependency_pattern" yaml:"dependency_pattern" mapstructure:"dependency_pattern"`
-
-	// FoundDependency corresponds to the JSON schema field "found_dependency".
-	FoundDependency FoundDependency `json:"found_dependency" yaml:"found_dependency" mapstructure:"found_dependency"`
-
-	// Lockfile corresponds to the JSON schema field "lockfile".
-	Lockfile string `json:"lockfile" yaml:"lockfile" mapstructure:"lockfile"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *DependencyMatch) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["dependency_pattern"]; !ok || v == nil {
-		return fmt.Errorf("field dependency_pattern in DependencyMatch: required")
-	}
-	if v, ok := raw["found_dependency"]; !ok || v == nil {
-		return fmt.Errorf("field found_dependency in DependencyMatch: required")
-	}
-	if v, ok := raw["lockfile"]; !ok || v == nil {
-		return fmt.Errorf("field lockfile in DependencyMatch: required")
-	}
-	type Plain DependencyMatch
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = DependencyMatch(plain)
-	return nil
-}
-
-type ScaInfo struct {
-	// DependencyMatch corresponds to the JSON schema field "dependency_match".
-	DependencyMatch DependencyMatch `json:"dependency_match" yaml:"dependency_match" mapstructure:"dependency_match"`
-
-	// ReachabilityRule corresponds to the JSON schema field "reachability_rule".
-	ReachabilityRule bool `json:"reachability_rule" yaml:"reachability_rule" mapstructure:"reachability_rule"`
-
-	// Reachable corresponds to the JSON schema field "reachable".
-	Reachable bool `json:"reachable" yaml:"reachable" mapstructure:"reachable"`
-
-	// ScaFindingSchema corresponds to the JSON schema field "sca_finding_schema".
-	ScaFindingSchema int `json:"sca_finding_schema" yaml:"sca_finding_schema" mapstructure:"sca_finding_schema"`
-}
-
-type MetavarValue struct {
-	// AbstractContent corresponds to the JSON schema field "abstract_content".
-	AbstractContent string `json:"abstract_content" yaml:"abstract_content" mapstructure:"abstract_content"`
-
-	// End corresponds to the JSON schema field "end".
-	End Position `json:"end" yaml:"end" mapstructure:"end"`
-
-	// PropagatedValue corresponds to the JSON schema field "propagated_value".
-	PropagatedValue *SvalueValue `json:"propagated_value,omitempty" yaml:"propagated_value,omitempty" mapstructure:"propagated_value,omitempty"`
-
-	// Start corresponds to the JSON schema field "start".
-	Start Position `json:"start" yaml:"start" mapstructure:"start"`
-}
-
-type FindingValidationState interface{}
-
-type Finding struct {
-	// CheckId corresponds to the JSON schema field "check_id".
-	CheckId RuleId `json:"check_id" yaml:"check_id" mapstructure:"check_id"`
-
-	// Column corresponds to the JSON schema field "column".
-	Column int `json:"column" yaml:"column" mapstructure:"column"`
-
-	// CommitDate corresponds to the JSON schema field "commit_date".
-	CommitDate string `json:"commit_date" yaml:"commit_date" mapstructure:"commit_date"`
-
-	// DataflowTrace corresponds to the JSON schema field "dataflow_trace".
-	DataflowTrace *MatchDataflowTrace `json:"dataflow_trace,omitempty" yaml:"dataflow_trace,omitempty" mapstructure:"dataflow_trace,omitempty"`
-
-	// EndColumn corresponds to the JSON schema field "end_column".
-	EndColumn int `json:"end_column" yaml:"end_column" mapstructure:"end_column"`
-
-	// EndLine corresponds to the JSON schema field "end_line".
-	EndLine int `json:"end_line" yaml:"end_line" mapstructure:"end_line"`
-
-	// FixedLines corresponds to the JSON schema field "fixed_lines".
-	FixedLines []string `json:"fixed_lines,omitempty" yaml:"fixed_lines,omitempty" mapstructure:"fixed_lines,omitempty"`
-
-	// Hashes corresponds to the JSON schema field "hashes".
-	Hashes *FindingHashes `json:"hashes,omitempty" yaml:"hashes,omitempty" mapstructure:"hashes,omitempty"`
-
-	// Index corresponds to the JSON schema field "index".
-	Index int `json:"index" yaml:"index" mapstructure:"index"`
-
-	// IsBlocking corresponds to the JSON schema field "is_blocking".
-	IsBlocking bool `json:"is_blocking" yaml:"is_blocking" mapstructure:"is_blocking"`
-
-	// Line corresponds to the JSON schema field "line".
-	Line int `json:"line" yaml:"line" mapstructure:"line"`
-
-	// MatchBasedId corresponds to the JSON schema field "match_based_id".
-	MatchBasedId *string `json:"match_based_id,omitempty" yaml:"match_based_id,omitempty" mapstructure:"match_based_id,omitempty"`
-
-	// Message corresponds to the JSON schema field "message".
-	Message string `json:"message" yaml:"message" mapstructure:"message"`
-
-	// Metadata corresponds to the JSON schema field "metadata".
-	Metadata FindingMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
-
-	// Path corresponds to the JSON schema field "path".
-	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
-
-	// ScaInfo corresponds to the JSON schema field "sca_info".
-	ScaInfo *ScaInfo `json:"sca_info,omitempty" yaml:"sca_info,omitempty" mapstructure:"sca_info,omitempty"`
-
-	// Severity corresponds to the JSON schema field "severity".
-	Severity interface{} `json:"severity" yaml:"severity" mapstructure:"severity"`
-
-	// SyntacticId corresponds to the JSON schema field "syntactic_id".
-	SyntacticId string `json:"syntactic_id" yaml:"syntactic_id" mapstructure:"syntactic_id"`
-
-	// ValidationState corresponds to the JSON schema field "validation_state".
-	ValidationState FindingValidationState `json:"validation_state,omitempty" yaml:"validation_state,omitempty" mapstructure:"validation_state,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Finding) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["check_id"]; !ok || v == nil {
-		return fmt.Errorf("field check_id in Finding: required")
-	}
-	if v, ok := raw["column"]; !ok || v == nil {
-		return fmt.Errorf("field column in Finding: required")
-	}
-	if v, ok := raw["commit_date"]; !ok || v == nil {
-		return fmt.Errorf("field commit_date in Finding: required")
-	}
-	if v, ok := raw["end_column"]; !ok || v == nil {
-		return fmt.Errorf("field end_column in Finding: required")
-	}
-	if v, ok := raw["end_line"]; !ok || v == nil {
-		return fmt.Errorf("field end_line in Finding: required")
-	}
-	if v, ok := raw["index"]; !ok || v == nil {
-		return fmt.Errorf("field index in Finding: required")
-	}
-	if v, ok := raw["is_blocking"]; !ok || v == nil {
-		return fmt.Errorf("field is_blocking in Finding: required")
-	}
-	if v, ok := raw["line"]; !ok || v == nil {
-		return fmt.Errorf("field line in Finding: required")
-	}
-	if v, ok := raw["message"]; !ok || v == nil {
-		return fmt.Errorf("field message in Finding: required")
-	}
-	if v, ok := raw["metadata"]; !ok || v == nil {
-		return fmt.Errorf("field metadata in Finding: required")
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in Finding: required")
-	}
-	if v, ok := raw["severity"]; !ok || v == nil {
-		return fmt.Errorf("field severity in Finding: required")
-	}
-	if v, ok := raw["syntactic_id"]; !ok || v == nil {
-		return fmt.Errorf("field syntactic_id in Finding: required")
-	}
-	type Plain Finding
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Finding(plain)
-	return nil
-}
-
-type CiScanResults struct {
-	// Contributions corresponds to the JSON schema field "contributions".
-	Contributions Contributions `json:"contributions,omitempty" yaml:"contributions,omitempty" mapstructure:"contributions,omitempty"`
-
-	// Dependencies corresponds to the JSON schema field "dependencies".
-	Dependencies CiScanDependencies `json:"dependencies,omitempty" yaml:"dependencies,omitempty" mapstructure:"dependencies,omitempty"`
-
-	// Findings corresponds to the JSON schema field "findings".
-	Findings []Finding `json:"findings" yaml:"findings" mapstructure:"findings"`
-
-	// Ignores corresponds to the JSON schema field "ignores".
-	Ignores []Finding `json:"ignores" yaml:"ignores" mapstructure:"ignores"`
-
-	// RenamedPaths corresponds to the JSON schema field "renamed_paths".
-	RenamedPaths []Fpath `json:"renamed_paths" yaml:"renamed_paths" mapstructure:"renamed_paths"`
-
-	// RuleIds corresponds to the JSON schema field "rule_ids".
-	RuleIds []RuleId `json:"rule_ids" yaml:"rule_ids" mapstructure:"rule_ids"`
-
-	// SearchedPaths corresponds to the JSON schema field "searched_paths".
-	SearchedPaths []Fpath `json:"searched_paths" yaml:"searched_paths" mapstructure:"searched_paths"`
-
-	// Token corresponds to the JSON schema field "token".
-	Token *string `json:"token" yaml:"token" mapstructure:"token"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanResults) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["findings"]; !ok || v == nil {
-		return fmt.Errorf("field findings in CiScanResults: required")
-	}
-	if v, ok := raw["ignores"]; !ok || v == nil {
-		return fmt.Errorf("field ignores in CiScanResults: required")
-	}
-	if v, ok := raw["renamed_paths"]; !ok || v == nil {
-		return fmt.Errorf("field renamed_paths in CiScanResults: required")
-	}
-	if v, ok := raw["rule_ids"]; !ok || v == nil {
-		return fmt.Errorf("field rule_ids in CiScanResults: required")
-	}
-	if v, ok := raw["searched_paths"]; !ok || v == nil {
-		return fmt.Errorf("field searched_paths in CiScanResults: required")
-	}
-	if v, ok := raw["token"]; !ok || v == nil {
-		return fmt.Errorf("field token in CiScanResults: required")
-	}
-	type Plain CiScanResults
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanResults(plain)
-	return nil
-}
-
-type CiScanResultsResponseError struct {
-	// Message corresponds to the JSON schema field "message".
-	Message string `json:"message" yaml:"message" mapstructure:"message"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanResultsResponseError) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["message"]; !ok || v == nil {
-		return fmt.Errorf("field message in CiScanResultsResponseError: required")
-	}
-	type Plain CiScanResultsResponseError
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanResultsResponseError(plain)
-	return nil
-}
-
-type CiScanResultsResponse struct {
-	// Errors corresponds to the JSON schema field "errors".
-	Errors []CiScanResultsResponseError `json:"errors" yaml:"errors" mapstructure:"errors"`
-
-	// TaskId corresponds to the JSON schema field "task_id".
-	TaskId *string `json:"task_id,omitempty" yaml:"task_id,omitempty" mapstructure:"task_id,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CiScanResultsResponse) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["errors"]; !ok || v == nil {
-		return fmt.Errorf("field errors in CiScanResultsResponse: required")
-	}
-	type Plain CiScanResultsResponse
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CiScanResultsResponse(plain)
-	return nil
-}
-
-type CliMatchExtraEngineKind interface{}
-
-type CliMatchExtraExtraExtra interface{}
-
-type FixRegex struct {
-	// Count corresponds to the JSON schema field "count".
-	Count *int `json:"count,omitempty" yaml:"count,omitempty" mapstructure:"count,omitempty"`
-
-	// Regex corresponds to the JSON schema field "regex".
-	Regex string `json:"regex" yaml:"regex" mapstructure:"regex"`
-
-	// Replacement corresponds to the JSON schema field "replacement".
-	Replacement string `json:"replacement" yaml:"replacement" mapstructure:"replacement"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *FixRegex) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["regex"]; !ok || v == nil {
-		return fmt.Errorf("field regex in FixRegex: required")
-	}
-	if v, ok := raw["replacement"]; !ok || v == nil {
-		return fmt.Errorf("field replacement in FixRegex: required")
-	}
-	type Plain FixRegex
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = FixRegex(plain)
-	return nil
-}
-
-type CliMatchExtraMetadata interface{}
-
-type SvalueValue struct {
-	// SvalueAbstractContent corresponds to the JSON schema field
-	// "svalue_abstract_content".
-	SvalueAbstractContent string `json:"svalue_abstract_content" yaml:"svalue_abstract_content" mapstructure:"svalue_abstract_content"`
-
-	// SvalueEnd corresponds to the JSON schema field "svalue_end".
-	SvalueEnd *Position `json:"svalue_end,omitempty" yaml:"svalue_end,omitempty" mapstructure:"svalue_end,omitempty"`
-
-	// SvalueStart corresponds to the JSON schema field "svalue_start".
-	SvalueStart *Position `json:"svalue_start,omitempty" yaml:"svalue_start,omitempty" mapstructure:"svalue_start,omitempty"`
-}
-
-type Contributor struct {
-	// CommitAuthorEmail corresponds to the JSON schema field "commit_author_email".
-	CommitAuthorEmail string `json:"commit_author_email" yaml:"commit_author_email" mapstructure:"commit_author_email"`
-
-	// CommitAuthorName corresponds to the JSON schema field "commit_author_name".
-	CommitAuthorName string `json:"commit_author_name" yaml:"commit_author_name" mapstructure:"commit_author_name"`
-}
-
-type CiEnv map[string]string
-
-type FindingMetadata interface{}
-
-type Metavars map[string]MetavarValue
-
-type CliMatchExtraSeverity interface{}
-
-type CliMatchExtraValidationState interface{}
-
-type CliMatchExtra struct {
-	// DataflowTrace corresponds to the JSON schema field "dataflow_trace".
-	DataflowTrace *MatchDataflowTrace `json:"dataflow_trace,omitempty" yaml:"dataflow_trace,omitempty" mapstructure:"dataflow_trace,omitempty"`
-
-	// EngineKind corresponds to the JSON schema field "engine_kind".
-	EngineKind CliMatchExtraEngineKind `json:"engine_kind,omitempty" yaml:"engine_kind,omitempty" mapstructure:"engine_kind,omitempty"`
-
-	// ExtraExtra corresponds to the JSON schema field "extra_extra".
-	ExtraExtra CliMatchExtraExtraExtra `json:"extra_extra,omitempty" yaml:"extra_extra,omitempty" mapstructure:"extra_extra,omitempty"`
-
-	// Fingerprint corresponds to the JSON schema field "fingerprint".
-	Fingerprint string `json:"fingerprint" yaml:"fingerprint" mapstructure:"fingerprint"`
-
-	// Fix corresponds to the JSON schema field "fix".
-	Fix *string `json:"fix,omitempty" yaml:"fix,omitempty" mapstructure:"fix,omitempty"`
-
-	// FixRegex corresponds to the JSON schema field "fix_regex".
-	FixRegex *FixRegex `json:"fix_regex,omitempty" yaml:"fix_regex,omitempty" mapstructure:"fix_regex,omitempty"`
-
-	// FixedLines corresponds to the JSON schema field "fixed_lines".
-	FixedLines []string `json:"fixed_lines,omitempty" yaml:"fixed_lines,omitempty" mapstructure:"fixed_lines,omitempty"`
-
-	// IsIgnored corresponds to the JSON schema field "is_ignored".
-	IsIgnored *bool `json:"is_ignored,omitempty" yaml:"is_ignored,omitempty" mapstructure:"is_ignored,omitempty"`
-
-	// Lines corresponds to the JSON schema field "lines".
-	Lines string `json:"lines" yaml:"lines" mapstructure:"lines"`
-
-	// Message corresponds to the JSON schema field "message".
-	Message string `json:"message" yaml:"message" mapstructure:"message"`
-
-	// Metadata corresponds to the JSON schema field "metadata".
-	Metadata CliMatchExtraMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
-
-	// Metavars corresponds to the JSON schema field "metavars".
-	Metavars Metavars `json:"metavars,omitempty" yaml:"metavars,omitempty" mapstructure:"metavars,omitempty"`
-
-	// ScaInfo corresponds to the JSON schema field "sca_info".
-	ScaInfo *ScaInfo `json:"sca_info,omitempty" yaml:"sca_info,omitempty" mapstructure:"sca_info,omitempty"`
-
-	// Severity corresponds to the JSON schema field "severity".
-	Severity CliMatchExtraSeverity `json:"severity" yaml:"severity" mapstructure:"severity"`
-
-	// ValidationState corresponds to the JSON schema field "validation_state".
-	ValidationState CliMatchExtraValidationState `json:"validation_state,omitempty" yaml:"validation_state,omitempty" mapstructure:"validation_state,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CliMatchExtra) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["fingerprint"]; !ok || v == nil {
-		return fmt.Errorf("field fingerprint in CliMatchExtra: required")
-	}
-	if v, ok := raw["lines"]; !ok || v == nil {
-		return fmt.Errorf("field lines in CliMatchExtra: required")
-	}
-	if v, ok := raw["message"]; !ok || v == nil {
-		return fmt.Errorf("field message in CliMatchExtra: required")
-	}
-	if v, ok := raw["metadata"]; !ok || v == nil {
-		return fmt.Errorf("field metadata in CliMatchExtra: required")
-	}
-	if v, ok := raw["severity"]; !ok || v == nil {
-		return fmt.Errorf("field severity in CliMatchExtra: required")
-	}
-	type Plain CliMatchExtra
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CliMatchExtra(plain)
 	return nil
 }
 
@@ -1312,95 +607,396 @@ type CliMatch struct {
 	Start Position `json:"start" yaml:"start" mapstructure:"start"`
 }
 
+type CliMatchExtra struct {
+	// DataflowTrace corresponds to the JSON schema field "dataflow_trace".
+	DataflowTrace *MatchDataflowTrace `json:"dataflow_trace,omitempty" yaml:"dataflow_trace,omitempty" mapstructure:"dataflow_trace,omitempty"`
+
+	// EngineKind corresponds to the JSON schema field "engine_kind".
+	EngineKind CliMatchExtraEngineKind `json:"engine_kind,omitempty" yaml:"engine_kind,omitempty" mapstructure:"engine_kind,omitempty"`
+
+	// ExtraExtra corresponds to the JSON schema field "extra_extra".
+	ExtraExtra CliMatchExtraExtraExtra `json:"extra_extra,omitempty" yaml:"extra_extra,omitempty" mapstructure:"extra_extra,omitempty"`
+
+	// Fingerprint corresponds to the JSON schema field "fingerprint".
+	Fingerprint string `json:"fingerprint" yaml:"fingerprint" mapstructure:"fingerprint"`
+
+	// Fix corresponds to the JSON schema field "fix".
+	Fix *string `json:"fix,omitempty" yaml:"fix,omitempty" mapstructure:"fix,omitempty"`
+
+	// FixedLines corresponds to the JSON schema field "fixed_lines".
+	FixedLines []string `json:"fixed_lines,omitempty" yaml:"fixed_lines,omitempty" mapstructure:"fixed_lines,omitempty"`
+
+	// HistoricalInfo corresponds to the JSON schema field "historical_info".
+	HistoricalInfo *HistoricalInfo `json:"historical_info,omitempty" yaml:"historical_info,omitempty" mapstructure:"historical_info,omitempty"`
+
+	// IsIgnored corresponds to the JSON schema field "is_ignored".
+	IsIgnored *bool `json:"is_ignored,omitempty" yaml:"is_ignored,omitempty" mapstructure:"is_ignored,omitempty"`
+
+	// Lines corresponds to the JSON schema field "lines".
+	Lines string `json:"lines" yaml:"lines" mapstructure:"lines"`
+
+	// Message corresponds to the JSON schema field "message".
+	Message string `json:"message" yaml:"message" mapstructure:"message"`
+
+	// Metadata corresponds to the JSON schema field "metadata".
+	Metadata CliMatchExtraMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
+
+	// Metavars corresponds to the JSON schema field "metavars".
+	Metavars map[string]MetavarValue `json:"metavars,omitempty" yaml:"metavars,omitempty" mapstructure:"metavars,omitempty"`
+
+	// ScaInfo corresponds to the JSON schema field "sca_info".
+	ScaInfo *ScaMatch `json:"sca_info,omitempty" yaml:"sca_info,omitempty" mapstructure:"sca_info,omitempty"`
+
+	// Severity corresponds to the JSON schema field "severity".
+	Severity CliMatchExtraSeverity `json:"severity" yaml:"severity" mapstructure:"severity"`
+
+	// ValidationState corresponds to the JSON schema field "validation_state".
+	ValidationState CliMatchExtraValidationState `json:"validation_state,omitempty" yaml:"validation_state,omitempty" mapstructure:"validation_state,omitempty"`
+}
+
+type CliMatchExtraEngineKind interface{}
+
+type CliMatchExtraExtraExtra interface{}
+
+type CliMatchExtraMetadata interface{}
+
+type CliMatchExtraSeverity interface{}
+
+type CliMatchExtraValidationState interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CliMatch) UnmarshalJSON(b []byte) error {
+func (j *CliMatchExtra) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["check_id"]; !ok || v == nil {
+	if _, ok := raw["fingerprint"]; raw != nil && !ok {
+		return fmt.Errorf("field fingerprint in CliMatchExtra: required")
+	}
+	if _, ok := raw["lines"]; raw != nil && !ok {
+		return fmt.Errorf("field lines in CliMatchExtra: required")
+	}
+	if _, ok := raw["message"]; raw != nil && !ok {
+		return fmt.Errorf("field message in CliMatchExtra: required")
+	}
+	if _, ok := raw["metadata"]; raw != nil && !ok {
+		return fmt.Errorf("field metadata in CliMatchExtra: required")
+	}
+	if _, ok := raw["severity"]; raw != nil && !ok {
+		return fmt.Errorf("field severity in CliMatchExtra: required")
+	}
+	type Plain CliMatchExtra
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CliMatchExtra(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CliMatch) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["check_id"]; raw != nil && !ok {
 		return fmt.Errorf("field check_id in CliMatch: required")
 	}
-	if v, ok := raw["end"]; !ok || v == nil {
+	if _, ok := raw["end"]; raw != nil && !ok {
 		return fmt.Errorf("field end in CliMatch: required")
 	}
-	if v, ok := raw["extra"]; !ok || v == nil {
+	if _, ok := raw["extra"]; raw != nil && !ok {
 		return fmt.Errorf("field extra in CliMatch: required")
 	}
-	if v, ok := raw["path"]; !ok || v == nil {
+	if _, ok := raw["path"]; raw != nil && !ok {
 		return fmt.Errorf("field path in CliMatch: required")
 	}
-	if v, ok := raw["start"]; !ok || v == nil {
+	if _, ok := raw["start"]; raw != nil && !ok {
 		return fmt.Errorf("field start in CliMatch: required")
 	}
 	type Plain CliMatch
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = CliMatch(plain)
 	return nil
 }
 
+type CliOutputExtra struct {
+	// EngineRequested corresponds to the JSON schema field "engine_requested".
+	EngineRequested CliOutputExtraEngineRequested `json:"engine_requested,omitempty" yaml:"engine_requested,omitempty" mapstructure:"engine_requested,omitempty"`
+
+	// Explanations corresponds to the JSON schema field "explanations".
+	Explanations []MatchingExplanation `json:"explanations,omitempty" yaml:"explanations,omitempty" mapstructure:"explanations,omitempty"`
+
+	// InterfileLanguagesUsed corresponds to the JSON schema field
+	// "interfile_languages_used".
+	InterfileLanguagesUsed []string `json:"interfile_languages_used,omitempty" yaml:"interfile_languages_used,omitempty" mapstructure:"interfile_languages_used,omitempty"`
+
+	// McpScanResults corresponds to the JSON schema field "mcp_scan_results".
+	McpScanResults *McpScanResults `json:"mcp_scan_results,omitempty" yaml:"mcp_scan_results,omitempty" mapstructure:"mcp_scan_results,omitempty"`
+
+	// Paths corresponds to the JSON schema field "paths".
+	Paths ScannedAndSkipped `json:"paths" yaml:"paths" mapstructure:"paths"`
+
+	// RulesByEngine corresponds to the JSON schema field "rules_by_engine".
+	RulesByEngine []RuleIdAndEngineKind `json:"rules_by_engine,omitempty" yaml:"rules_by_engine,omitempty" mapstructure:"rules_by_engine,omitempty"`
+
+	// SkippedRules corresponds to the JSON schema field "skipped_rules".
+	SkippedRules []SkippedRule `json:"skipped_rules,omitempty" yaml:"skipped_rules,omitempty" mapstructure:"skipped_rules,omitempty"`
+
+	// Subprojects corresponds to the JSON schema field "subprojects".
+	Subprojects []CliOutputSubprojectInfo `json:"subprojects,omitempty" yaml:"subprojects,omitempty" mapstructure:"subprojects,omitempty"`
+
+	// Time corresponds to the JSON schema field "time".
+	Time *Profile `json:"time,omitempty" yaml:"time,omitempty" mapstructure:"time,omitempty"`
+}
+
 type CliOutputExtraEngineRequested interface{}
 
-type CoreMatchExtraEngineKind interface{}
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CliOutputExtra) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["paths"]; raw != nil && !ok {
+		return fmt.Errorf("field paths in CliOutputExtra: required")
+	}
+	type Plain CliOutputExtra
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CliOutputExtra(plain)
+	return nil
+}
 
-type CoreMatchExtraExtraExtra interface{}
+type CliOutputSubprojectInfo struct {
+	// DependencySources corresponds to the JSON schema field "dependency_sources".
+	DependencySources []Fpath `json:"dependency_sources" yaml:"dependency_sources" mapstructure:"dependency_sources"`
 
-type CoreMatchExtraMetadata interface{}
+	// Resolved corresponds to the JSON schema field "resolved".
+	Resolved bool `json:"resolved" yaml:"resolved" mapstructure:"resolved"`
 
-type CoreMatchExtraSeverity interface{}
+	// ResolvedStats corresponds to the JSON schema field "resolved_stats".
+	ResolvedStats *DependencyResolutionStats `json:"resolved_stats,omitempty" yaml:"resolved_stats,omitempty" mapstructure:"resolved_stats,omitempty"`
 
-type CoreMatchExtraValidationState interface{}
+	// UnresolvedReason corresponds to the JSON schema field "unresolved_reason".
+	UnresolvedReason CliOutputSubprojectInfoUnresolvedReason `json:"unresolved_reason,omitempty" yaml:"unresolved_reason,omitempty" mapstructure:"unresolved_reason,omitempty"`
+}
 
-type CoreMatchExtra struct {
-	// DataflowTrace corresponds to the JSON schema field "dataflow_trace".
-	DataflowTrace *MatchDataflowTrace `json:"dataflow_trace,omitempty" yaml:"dataflow_trace,omitempty" mapstructure:"dataflow_trace,omitempty"`
+type CliOutputSubprojectInfoUnresolvedReason interface{}
 
-	// EngineKind corresponds to the JSON schema field "engine_kind".
-	EngineKind CoreMatchExtraEngineKind `json:"engine_kind" yaml:"engine_kind" mapstructure:"engine_kind"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CliOutputSubprojectInfo) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_sources"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_sources in CliOutputSubprojectInfo: required")
+	}
+	if _, ok := raw["resolved"]; raw != nil && !ok {
+		return fmt.Errorf("field resolved in CliOutputSubprojectInfo: required")
+	}
+	type Plain CliOutputSubprojectInfo
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CliOutputSubprojectInfo(plain)
+	return nil
+}
 
-	// ExtraExtra corresponds to the JSON schema field "extra_extra".
-	ExtraExtra CoreMatchExtraExtraExtra `json:"extra_extra,omitempty" yaml:"extra_extra,omitempty" mapstructure:"extra_extra,omitempty"`
+type CodeTarget struct {
+	// Analyzer corresponds to the JSON schema field "analyzer".
+	Analyzer Analyzer `json:"analyzer" yaml:"analyzer" mapstructure:"analyzer"`
 
-	// Message corresponds to the JSON schema field "message".
-	Message *string `json:"message,omitempty" yaml:"message,omitempty" mapstructure:"message,omitempty"`
+	// DependencySource corresponds to the JSON schema field "dependency_source".
+	DependencySource CodeTargetDependencySource `json:"dependency_source,omitempty" yaml:"dependency_source,omitempty" mapstructure:"dependency_source,omitempty"`
 
-	// Metadata corresponds to the JSON schema field "metadata".
-	Metadata CoreMatchExtraMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
+	// Path corresponds to the JSON schema field "path".
+	Path Fppath `json:"path" yaml:"path" mapstructure:"path"`
 
-	// Metavars corresponds to the JSON schema field "metavars".
-	Metavars Metavars `json:"metavars" yaml:"metavars" mapstructure:"metavars"`
+	// Products corresponds to the JSON schema field "products".
+	Products []CodeTargetProductsElem `json:"products" yaml:"products" mapstructure:"products"`
+}
 
-	// RenderedFix corresponds to the JSON schema field "rendered_fix".
-	RenderedFix *string `json:"rendered_fix,omitempty" yaml:"rendered_fix,omitempty" mapstructure:"rendered_fix,omitempty"`
+type CodeTargetDependencySource interface{}
 
-	// Severity corresponds to the JSON schema field "severity".
-	Severity CoreMatchExtraSeverity `json:"severity,omitempty" yaml:"severity,omitempty" mapstructure:"severity,omitempty"`
+type CodeTargetProductsElem interface{}
 
-	// ValidationState corresponds to the JSON schema field "validation_state".
-	ValidationState CoreMatchExtraValidationState `json:"validation_state,omitempty" yaml:"validation_state,omitempty" mapstructure:"validation_state,omitempty"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CodeTarget) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["analyzer"]; raw != nil && !ok {
+		return fmt.Errorf("field analyzer in CodeTarget: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in CodeTarget: required")
+	}
+	if _, ok := raw["products"]; raw != nil && !ok {
+		return fmt.Errorf("field products in CodeTarget: required")
+	}
+	type Plain CodeTarget
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CodeTarget(plain)
+	return nil
+}
+
+type ConfigError struct {
+	// File corresponds to the JSON schema field "file".
+	File Fpath `json:"file" yaml:"file" mapstructure:"file"`
+
+	// Reason corresponds to the JSON schema field "reason".
+	Reason ConfigErrorReason `json:"reason" yaml:"reason" mapstructure:"reason"`
+}
+
+type ConfigErrorReason interface{}
+
+type ConfigErrorReason_1 interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ConfigError) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["file"]; raw != nil && !ok {
+		return fmt.Errorf("field file in ConfigError: required")
+	}
+	if _, ok := raw["reason"]; raw != nil && !ok {
+		return fmt.Errorf("field reason in ConfigError: required")
+	}
+	type Plain ConfigError
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ConfigError(plain)
+	return nil
+}
+
+type Contribution struct {
+	// CommitHash corresponds to the JSON schema field "commit_hash".
+	CommitHash string `json:"commit_hash" yaml:"commit_hash" mapstructure:"commit_hash"`
+
+	// CommitTimestamp corresponds to the JSON schema field "commit_timestamp".
+	CommitTimestamp Datetime `json:"commit_timestamp" yaml:"commit_timestamp" mapstructure:"commit_timestamp"`
+
+	// Contributor corresponds to the JSON schema field "contributor".
+	Contributor Contributor `json:"contributor" yaml:"contributor" mapstructure:"contributor"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CoreMatchExtra) UnmarshalJSON(b []byte) error {
+func (j *Contribution) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["engine_kind"]; !ok || v == nil {
-		return fmt.Errorf("field engine_kind in CoreMatchExtra: required")
+	if _, ok := raw["commit_hash"]; raw != nil && !ok {
+		return fmt.Errorf("field commit_hash in Contribution: required")
 	}
-	if v, ok := raw["metavars"]; !ok || v == nil {
-		return fmt.Errorf("field metavars in CoreMatchExtra: required")
+	if _, ok := raw["commit_timestamp"]; raw != nil && !ok {
+		return fmt.Errorf("field commit_timestamp in Contribution: required")
 	}
-	type Plain CoreMatchExtra
+	if _, ok := raw["contributor"]; raw != nil && !ok {
+		return fmt.Errorf("field contributor in Contribution: required")
+	}
+	type Plain Contribution
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
-	*j = CoreMatchExtra(plain)
+	*j = Contribution(plain)
+	return nil
+}
+
+type Contributions []Contribution
+
+type Contributor struct {
+	// CommitAuthorEmail corresponds to the JSON schema field "commit_author_email".
+	CommitAuthorEmail string `json:"commit_author_email" yaml:"commit_author_email" mapstructure:"commit_author_email"`
+
+	// CommitAuthorName corresponds to the JSON schema field "commit_author_name".
+	CommitAuthorName string `json:"commit_author_name" yaml:"commit_author_name" mapstructure:"commit_author_name"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Contributor) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["commit_author_email"]; raw != nil && !ok {
+		return fmt.Errorf("field commit_author_email in Contributor: required")
+	}
+	if _, ok := raw["commit_author_name"]; raw != nil && !ok {
+		return fmt.Errorf("field commit_author_name in Contributor: required")
+	}
+	type Plain Contributor
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Contributor(plain)
+	return nil
+}
+
+type CoreError struct {
+	// Details corresponds to the JSON schema field "details".
+	Details *string `json:"details,omitempty" yaml:"details,omitempty" mapstructure:"details,omitempty"`
+
+	// ErrorType corresponds to the JSON schema field "error_type".
+	ErrorType CoreErrorErrorType `json:"error_type" yaml:"error_type" mapstructure:"error_type"`
+
+	// Location corresponds to the JSON schema field "location".
+	Location *Location `json:"location,omitempty" yaml:"location,omitempty" mapstructure:"location,omitempty"`
+
+	// Message corresponds to the JSON schema field "message".
+	Message string `json:"message" yaml:"message" mapstructure:"message"`
+
+	// RuleId corresponds to the JSON schema field "rule_id".
+	RuleId *RuleId `json:"rule_id,omitempty" yaml:"rule_id,omitempty" mapstructure:"rule_id,omitempty"`
+
+	// Severity corresponds to the JSON schema field "severity".
+	Severity CoreErrorSeverity `json:"severity" yaml:"severity" mapstructure:"severity"`
+}
+
+type CoreErrorErrorType interface{}
+
+type CoreErrorSeverity interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CoreError) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["error_type"]; raw != nil && !ok {
+		return fmt.Errorf("field error_type in CoreError: required")
+	}
+	if _, ok := raw["message"]; raw != nil && !ok {
+		return fmt.Errorf("field message in CoreError: required")
+	}
+	if _, ok := raw["severity"]; raw != nil && !ok {
+		return fmt.Errorf("field severity in CoreError: required")
+	}
+	type Plain CoreError
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CoreError(plain)
 	return nil
 }
 
@@ -1421,368 +1017,107 @@ type CoreMatch struct {
 	Start Position `json:"start" yaml:"start" mapstructure:"start"`
 }
 
+type CoreMatchExtra struct {
+	// DataflowTrace corresponds to the JSON schema field "dataflow_trace".
+	DataflowTrace *MatchDataflowTrace `json:"dataflow_trace,omitempty" yaml:"dataflow_trace,omitempty" mapstructure:"dataflow_trace,omitempty"`
+
+	// EngineKind corresponds to the JSON schema field "engine_kind".
+	EngineKind CoreMatchExtraEngineKind `json:"engine_kind" yaml:"engine_kind" mapstructure:"engine_kind"`
+
+	// ExtraExtra corresponds to the JSON schema field "extra_extra".
+	ExtraExtra CoreMatchExtraExtraExtra `json:"extra_extra,omitempty" yaml:"extra_extra,omitempty" mapstructure:"extra_extra,omitempty"`
+
+	// Fix corresponds to the JSON schema field "fix".
+	Fix *string `json:"fix,omitempty" yaml:"fix,omitempty" mapstructure:"fix,omitempty"`
+
+	// HistoricalInfo corresponds to the JSON schema field "historical_info".
+	HistoricalInfo *HistoricalInfo `json:"historical_info,omitempty" yaml:"historical_info,omitempty" mapstructure:"historical_info,omitempty"`
+
+	// IsIgnored corresponds to the JSON schema field "is_ignored".
+	IsIgnored bool `json:"is_ignored" yaml:"is_ignored" mapstructure:"is_ignored"`
+
+	// Message corresponds to the JSON schema field "message".
+	Message *string `json:"message,omitempty" yaml:"message,omitempty" mapstructure:"message,omitempty"`
+
+	// Metadata corresponds to the JSON schema field "metadata".
+	Metadata CoreMatchExtraMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
+
+	// Metavars corresponds to the JSON schema field "metavars".
+	Metavars map[string]MetavarValue `json:"metavars" yaml:"metavars" mapstructure:"metavars"`
+
+	// ScaMatch corresponds to the JSON schema field "sca_match".
+	ScaMatch *ScaMatch `json:"sca_match,omitempty" yaml:"sca_match,omitempty" mapstructure:"sca_match,omitempty"`
+
+	// Severity corresponds to the JSON schema field "severity".
+	Severity CoreMatchExtraSeverity `json:"severity,omitempty" yaml:"severity,omitempty" mapstructure:"severity,omitempty"`
+
+	// ValidationState corresponds to the JSON schema field "validation_state".
+	ValidationState CoreMatchExtraValidationState `json:"validation_state,omitempty" yaml:"validation_state,omitempty" mapstructure:"validation_state,omitempty"`
+}
+
+type CoreMatchExtraEngineKind interface{}
+
+type CoreMatchExtraExtraExtra interface{}
+
+type CoreMatchExtraMetadata interface{}
+
+type CoreMatchExtraSeverity interface{}
+
+type CoreMatchExtraValidationState interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CoreMatch) UnmarshalJSON(b []byte) error {
+func (j *CoreMatchExtra) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["check_id"]; !ok || v == nil {
+	if _, ok := raw["engine_kind"]; raw != nil && !ok {
+		return fmt.Errorf("field engine_kind in CoreMatchExtra: required")
+	}
+	if _, ok := raw["is_ignored"]; raw != nil && !ok {
+		return fmt.Errorf("field is_ignored in CoreMatchExtra: required")
+	}
+	if _, ok := raw["metavars"]; raw != nil && !ok {
+		return fmt.Errorf("field metavars in CoreMatchExtra: required")
+	}
+	type Plain CoreMatchExtra
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = CoreMatchExtra(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *CoreMatch) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["check_id"]; raw != nil && !ok {
 		return fmt.Errorf("field check_id in CoreMatch: required")
 	}
-	if v, ok := raw["end"]; !ok || v == nil {
+	if _, ok := raw["end"]; raw != nil && !ok {
 		return fmt.Errorf("field end in CoreMatch: required")
 	}
-	if v, ok := raw["extra"]; !ok || v == nil {
+	if _, ok := raw["extra"]; raw != nil && !ok {
 		return fmt.Errorf("field extra in CoreMatch: required")
 	}
-	if v, ok := raw["path"]; !ok || v == nil {
+	if _, ok := raw["path"]; raw != nil && !ok {
 		return fmt.Errorf("field path in CoreMatch: required")
 	}
-	if v, ok := raw["start"]; !ok || v == nil {
+	if _, ok := raw["start"]; raw != nil && !ok {
 		return fmt.Errorf("field start in CoreMatch: required")
 	}
 	type Plain CoreMatch
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = CoreMatch(plain)
 	return nil
 }
-
-type MatchingExplanationOp interface{}
-
-type MatchingExplanation struct {
-	// Children corresponds to the JSON schema field "children".
-	Children []*MatchingExplanation `json:"children" yaml:"children" mapstructure:"children"`
-
-	// Loc corresponds to the JSON schema field "loc".
-	Loc Location `json:"loc" yaml:"loc" mapstructure:"loc"`
-
-	// Matches corresponds to the JSON schema field "matches".
-	Matches []CoreMatch `json:"matches" yaml:"matches" mapstructure:"matches"`
-
-	// Op corresponds to the JSON schema field "op".
-	Op MatchingExplanationOp `json:"op" yaml:"op" mapstructure:"op"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *MatchingExplanation) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["children"]; !ok || v == nil {
-		return fmt.Errorf("field children in MatchingExplanation: required")
-	}
-	if v, ok := raw["loc"]; !ok || v == nil {
-		return fmt.Errorf("field loc in MatchingExplanation: required")
-	}
-	if v, ok := raw["matches"]; !ok || v == nil {
-		return fmt.Errorf("field matches in MatchingExplanation: required")
-	}
-	if v, ok := raw["op"]; !ok || v == nil {
-		return fmt.Errorf("field op in MatchingExplanation: required")
-	}
-	type Plain MatchingExplanation
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = MatchingExplanation(plain)
-	return nil
-}
-
-type SkippedTargetReason interface{}
-
-type SkippedTarget struct {
-	// Details corresponds to the JSON schema field "details".
-	Details *string `json:"details,omitempty" yaml:"details,omitempty" mapstructure:"details,omitempty"`
-
-	// Path corresponds to the JSON schema field "path".
-	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
-
-	// Reason corresponds to the JSON schema field "reason".
-	Reason SkippedTargetReason `json:"reason" yaml:"reason" mapstructure:"reason"`
-
-	// RuleId corresponds to the JSON schema field "rule_id".
-	RuleId *RuleId `json:"rule_id,omitempty" yaml:"rule_id,omitempty" mapstructure:"rule_id,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *SkippedTarget) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in SkippedTarget: required")
-	}
-	if v, ok := raw["reason"]; !ok || v == nil {
-		return fmt.Errorf("field reason in SkippedTarget: required")
-	}
-	type Plain SkippedTarget
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = SkippedTarget(plain)
-	return nil
-}
-
-type ScannedAndSkipped struct {
-	// Scanned corresponds to the JSON schema field "scanned".
-	Scanned []Fpath `json:"scanned" yaml:"scanned" mapstructure:"scanned"`
-
-	// Skipped corresponds to the JSON schema field "skipped".
-	Skipped []SkippedTarget `json:"skipped,omitempty" yaml:"skipped,omitempty" mapstructure:"skipped,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ScannedAndSkipped) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["scanned"]; !ok || v == nil {
-		return fmt.Errorf("field scanned in ScannedAndSkipped: required")
-	}
-	type Plain ScannedAndSkipped
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ScannedAndSkipped(plain)
-	return nil
-}
-
-type RuleIdAndEngineKind []interface{}
-
-type SkippedRule struct {
-	// Details corresponds to the JSON schema field "details".
-	Details string `json:"details" yaml:"details" mapstructure:"details"`
-
-	// Position corresponds to the JSON schema field "position".
-	Position Position `json:"position" yaml:"position" mapstructure:"position"`
-
-	// RuleId corresponds to the JSON schema field "rule_id".
-	RuleId RuleId `json:"rule_id" yaml:"rule_id" mapstructure:"rule_id"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *SkippedRule) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["details"]; !ok || v == nil {
-		return fmt.Errorf("field details in SkippedRule: required")
-	}
-	if v, ok := raw["position"]; !ok || v == nil {
-		return fmt.Errorf("field position in SkippedRule: required")
-	}
-	if v, ok := raw["rule_id"]; !ok || v == nil {
-		return fmt.Errorf("field rule_id in SkippedRule: required")
-	}
-	type Plain SkippedRule
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = SkippedRule(plain)
-	return nil
-}
-
-type ProfileProfilingTimes map[string]float64
-
-type TargetTimes struct {
-	// MatchTimes corresponds to the JSON schema field "match_times".
-	MatchTimes []float64 `json:"match_times" yaml:"match_times" mapstructure:"match_times"`
-
-	// NumBytes corresponds to the JSON schema field "num_bytes".
-	NumBytes int `json:"num_bytes" yaml:"num_bytes" mapstructure:"num_bytes"`
-
-	// ParseTimes corresponds to the JSON schema field "parse_times".
-	ParseTimes []float64 `json:"parse_times" yaml:"parse_times" mapstructure:"parse_times"`
-
-	// Path corresponds to the JSON schema field "path".
-	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
-
-	// RunTime corresponds to the JSON schema field "run_time".
-	RunTime float64 `json:"run_time" yaml:"run_time" mapstructure:"run_time"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *TargetTimes) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["match_times"]; !ok || v == nil {
-		return fmt.Errorf("field match_times in TargetTimes: required")
-	}
-	if v, ok := raw["num_bytes"]; !ok || v == nil {
-		return fmt.Errorf("field num_bytes in TargetTimes: required")
-	}
-	if v, ok := raw["parse_times"]; !ok || v == nil {
-		return fmt.Errorf("field parse_times in TargetTimes: required")
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in TargetTimes: required")
-	}
-	if v, ok := raw["run_time"]; !ok || v == nil {
-		return fmt.Errorf("field run_time in TargetTimes: required")
-	}
-	type Plain TargetTimes
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = TargetTimes(plain)
-	return nil
-}
-
-type Profile struct {
-	// MaxMemoryBytes corresponds to the JSON schema field "max_memory_bytes".
-	MaxMemoryBytes *int `json:"max_memory_bytes,omitempty" yaml:"max_memory_bytes,omitempty" mapstructure:"max_memory_bytes,omitempty"`
-
-	// ProfilingTimes corresponds to the JSON schema field "profiling_times".
-	ProfilingTimes ProfileProfilingTimes `json:"profiling_times" yaml:"profiling_times" mapstructure:"profiling_times"`
-
-	// Rules corresponds to the JSON schema field "rules".
-	Rules []RuleId `json:"rules" yaml:"rules" mapstructure:"rules"`
-
-	// RulesParseTime corresponds to the JSON schema field "rules_parse_time".
-	RulesParseTime float64 `json:"rules_parse_time" yaml:"rules_parse_time" mapstructure:"rules_parse_time"`
-
-	// Targets corresponds to the JSON schema field "targets".
-	Targets []TargetTimes `json:"targets" yaml:"targets" mapstructure:"targets"`
-
-	// TotalBytes corresponds to the JSON schema field "total_bytes".
-	TotalBytes int `json:"total_bytes" yaml:"total_bytes" mapstructure:"total_bytes"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Profile) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["profiling_times"]; !ok || v == nil {
-		return fmt.Errorf("field profiling_times in Profile: required")
-	}
-	if v, ok := raw["rules"]; !ok || v == nil {
-		return fmt.Errorf("field rules in Profile: required")
-	}
-	if v, ok := raw["rules_parse_time"]; !ok || v == nil {
-		return fmt.Errorf("field rules_parse_time in Profile: required")
-	}
-	if v, ok := raw["targets"]; !ok || v == nil {
-		return fmt.Errorf("field targets in Profile: required")
-	}
-	if v, ok := raw["total_bytes"]; !ok || v == nil {
-		return fmt.Errorf("field total_bytes in Profile: required")
-	}
-	type Plain Profile
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Profile(plain)
-	return nil
-}
-
-type CliOutputExtra struct {
-	// EngineRequested corresponds to the JSON schema field "engine_requested".
-	EngineRequested CliOutputExtraEngineRequested `json:"engine_requested,omitempty" yaml:"engine_requested,omitempty" mapstructure:"engine_requested,omitempty"`
-
-	// Explanations corresponds to the JSON schema field "explanations".
-	Explanations []MatchingExplanation `json:"explanations,omitempty" yaml:"explanations,omitempty" mapstructure:"explanations,omitempty"`
-
-	// Paths corresponds to the JSON schema field "paths".
-	Paths ScannedAndSkipped `json:"paths" yaml:"paths" mapstructure:"paths"`
-
-	// RulesByEngine corresponds to the JSON schema field "rules_by_engine".
-	RulesByEngine []RuleIdAndEngineKind `json:"rules_by_engine,omitempty" yaml:"rules_by_engine,omitempty" mapstructure:"rules_by_engine,omitempty"`
-
-	// SkippedRules corresponds to the JSON schema field "skipped_rules".
-	SkippedRules []SkippedRule `json:"skipped_rules,omitempty" yaml:"skipped_rules,omitempty" mapstructure:"skipped_rules,omitempty"`
-
-	// Time corresponds to the JSON schema field "time".
-	Time *Profile `json:"time,omitempty" yaml:"time,omitempty" mapstructure:"time,omitempty"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CliOutputExtra) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["paths"]; !ok || v == nil {
-		return fmt.Errorf("field paths in CliOutputExtra: required")
-	}
-	type Plain CliOutputExtra
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CliOutputExtra(plain)
-	return nil
-}
-
-type CoreErrorErrorType interface{}
-
-type CoreErrorSeverity interface{}
-
-type CoreError struct {
-	// Details corresponds to the JSON schema field "details".
-	Details *string `json:"details,omitempty" yaml:"details,omitempty" mapstructure:"details,omitempty"`
-
-	// ErrorType corresponds to the JSON schema field "error_type".
-	ErrorType CoreErrorErrorType `json:"error_type" yaml:"error_type" mapstructure:"error_type"`
-
-	// Location corresponds to the JSON schema field "location".
-	Location Location `json:"location" yaml:"location" mapstructure:"location"`
-
-	// Message corresponds to the JSON schema field "message".
-	Message string `json:"message" yaml:"message" mapstructure:"message"`
-
-	// RuleId corresponds to the JSON schema field "rule_id".
-	RuleId *RuleId `json:"rule_id,omitempty" yaml:"rule_id,omitempty" mapstructure:"rule_id,omitempty"`
-
-	// Severity corresponds to the JSON schema field "severity".
-	Severity CoreErrorSeverity `json:"severity" yaml:"severity" mapstructure:"severity"`
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CoreError) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["error_type"]; !ok || v == nil {
-		return fmt.Errorf("field error_type in CoreError: required")
-	}
-	if v, ok := raw["location"]; !ok || v == nil {
-		return fmt.Errorf("field location in CoreError: required")
-	}
-	if v, ok := raw["message"]; !ok || v == nil {
-		return fmt.Errorf("field message in CoreError: required")
-	}
-	if v, ok := raw["severity"]; !ok || v == nil {
-		return fmt.Errorf("field severity in CoreError: required")
-	}
-	type Plain CoreError
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = CoreError(plain)
-	return nil
-}
-
-type CoreOutputEngineRequested interface{}
 
 type CoreOutput struct {
 	// EngineRequested corresponds to the JSON schema field "engine_requested".
@@ -1793,6 +1128,13 @@ type CoreOutput struct {
 
 	// Explanations corresponds to the JSON schema field "explanations".
 	Explanations []MatchingExplanation `json:"explanations,omitempty" yaml:"explanations,omitempty" mapstructure:"explanations,omitempty"`
+
+	// InterfileLanguagesUsed corresponds to the JSON schema field
+	// "interfile_languages_used".
+	InterfileLanguagesUsed []string `json:"interfile_languages_used,omitempty" yaml:"interfile_languages_used,omitempty" mapstructure:"interfile_languages_used,omitempty"`
+
+	// McpScanResults corresponds to the JSON schema field "mcp_scan_results".
+	McpScanResults *McpScanResults `json:"mcp_scan_results,omitempty" yaml:"mcp_scan_results,omitempty" mapstructure:"mcp_scan_results,omitempty"`
 
 	// Paths corresponds to the JSON schema field "paths".
 	Paths ScannedAndSkipped `json:"paths" yaml:"paths" mapstructure:"paths"`
@@ -1806,31 +1148,47 @@ type CoreOutput struct {
 	// SkippedRules corresponds to the JSON schema field "skipped_rules".
 	SkippedRules []SkippedRule `json:"skipped_rules,omitempty" yaml:"skipped_rules,omitempty" mapstructure:"skipped_rules,omitempty"`
 
+	// Subprojects corresponds to the JSON schema field "subprojects".
+	Subprojects []CliOutputSubprojectInfo `json:"subprojects,omitempty" yaml:"subprojects,omitempty" mapstructure:"subprojects,omitempty"`
+
+	// SymbolAnalysis corresponds to the JSON schema field "symbol_analysis".
+	SymbolAnalysis SymbolAnalysis `json:"symbol_analysis,omitempty" yaml:"symbol_analysis,omitempty" mapstructure:"symbol_analysis,omitempty"`
+
 	// Time corresponds to the JSON schema field "time".
 	Time *Profile `json:"time,omitempty" yaml:"time,omitempty" mapstructure:"time,omitempty"`
 
 	// Version corresponds to the JSON schema field "version".
-	Version *Version `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version,omitempty"`
+	Version Version `json:"version" yaml:"version" mapstructure:"version"`
+}
+
+type CoreOutputEngineRequested interface{}
+
+type CoreOutputExtra struct {
+	// SymbolAnalysis corresponds to the JSON schema field "symbol_analysis".
+	SymbolAnalysis SymbolAnalysis `json:"symbol_analysis,omitempty" yaml:"symbol_analysis,omitempty" mapstructure:"symbol_analysis,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CoreOutput) UnmarshalJSON(b []byte) error {
+func (j *CoreOutput) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["errors"]; !ok || v == nil {
+	if _, ok := raw["errors"]; raw != nil && !ok {
 		return fmt.Errorf("field errors in CoreOutput: required")
 	}
-	if v, ok := raw["paths"]; !ok || v == nil {
+	if _, ok := raw["paths"]; raw != nil && !ok {
 		return fmt.Errorf("field paths in CoreOutput: required")
 	}
-	if v, ok := raw["results"]; !ok || v == nil {
+	if _, ok := raw["results"]; raw != nil && !ok {
 		return fmt.Errorf("field results in CoreOutput: required")
+	}
+	if _, ok := raw["version"]; raw != nil && !ok {
+		return fmt.Errorf("field version in CoreOutput: required")
 	}
 	type Plain CoreOutput
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = CoreOutput(plain)
@@ -1838,6 +1196,233 @@ func (j *CoreOutput) UnmarshalJSON(b []byte) error {
 }
 
 type Datetime string
+
+type DefRuleTime struct {
+	// Fline corresponds to the JSON schema field "fline".
+	Fline int `json:"fline" yaml:"fline" mapstructure:"fline"`
+
+	// Fpath corresponds to the JSON schema field "fpath".
+	Fpath Fpath `json:"fpath" yaml:"fpath" mapstructure:"fpath"`
+
+	// RuleId corresponds to the JSON schema field "rule_id".
+	RuleId RuleId `json:"rule_id" yaml:"rule_id" mapstructure:"rule_id"`
+
+	// Time corresponds to the JSON schema field "time".
+	Time float64 `json:"time" yaml:"time" mapstructure:"time"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DefRuleTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["fline"]; raw != nil && !ok {
+		return fmt.Errorf("field fline in DefRuleTime: required")
+	}
+	if _, ok := raw["fpath"]; raw != nil && !ok {
+		return fmt.Errorf("field fpath in DefRuleTime: required")
+	}
+	if _, ok := raw["rule_id"]; raw != nil && !ok {
+		return fmt.Errorf("field rule_id in DefRuleTime: required")
+	}
+	if _, ok := raw["time"]; raw != nil && !ok {
+		return fmt.Errorf("field time in DefRuleTime: required")
+	}
+	type Plain DefRuleTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DefRuleTime(plain)
+	return nil
+}
+
+type DependencyChild struct {
+	// Package corresponds to the JSON schema field "package".
+	Package string `json:"package" yaml:"package" mapstructure:"package"`
+
+	// Version corresponds to the JSON schema field "version".
+	Version string `json:"version" yaml:"version" mapstructure:"version"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DependencyChild) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["package"]; raw != nil && !ok {
+		return fmt.Errorf("field package in DependencyChild: required")
+	}
+	if _, ok := raw["version"]; raw != nil && !ok {
+		return fmt.Errorf("field version in DependencyChild: required")
+	}
+	type Plain DependencyChild
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DependencyChild(plain)
+	return nil
+}
+
+type DependencyKind interface{}
+
+type DependencyMatch struct {
+	// DependencyPattern corresponds to the JSON schema field "dependency_pattern".
+	DependencyPattern ScaPattern `json:"dependency_pattern" yaml:"dependency_pattern" mapstructure:"dependency_pattern"`
+
+	// FoundDependency corresponds to the JSON schema field "found_dependency".
+	FoundDependency FoundDependency `json:"found_dependency" yaml:"found_dependency" mapstructure:"found_dependency"`
+
+	// Lockfile corresponds to the JSON schema field "lockfile".
+	Lockfile Fpath `json:"lockfile" yaml:"lockfile" mapstructure:"lockfile"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DependencyMatch) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_pattern"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_pattern in DependencyMatch: required")
+	}
+	if _, ok := raw["found_dependency"]; raw != nil && !ok {
+		return fmt.Errorf("field found_dependency in DependencyMatch: required")
+	}
+	if _, ok := raw["lockfile"]; raw != nil && !ok {
+		return fmt.Errorf("field lockfile in DependencyMatch: required")
+	}
+	type Plain DependencyMatch
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DependencyMatch(plain)
+	return nil
+}
+
+type DependencyParserError struct {
+	// Col corresponds to the JSON schema field "col".
+	Col *int `json:"col,omitempty" yaml:"col,omitempty" mapstructure:"col,omitempty"`
+
+	// Line corresponds to the JSON schema field "line".
+	Line *int `json:"line,omitempty" yaml:"line,omitempty" mapstructure:"line,omitempty"`
+
+	// Parser corresponds to the JSON schema field "parser".
+	Parser DependencyParserErrorParser `json:"parser" yaml:"parser" mapstructure:"parser"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+
+	// Reason corresponds to the JSON schema field "reason".
+	Reason string `json:"reason" yaml:"reason" mapstructure:"reason"`
+
+	// Text corresponds to the JSON schema field "text".
+	Text *string `json:"text,omitempty" yaml:"text,omitempty" mapstructure:"text,omitempty"`
+}
+
+type DependencyParserErrorParser interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DependencyParserError) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["parser"]; raw != nil && !ok {
+		return fmt.Errorf("field parser in DependencyParserError: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in DependencyParserError: required")
+	}
+	if _, ok := raw["reason"]; raw != nil && !ok {
+		return fmt.Errorf("field reason in DependencyParserError: required")
+	}
+	type Plain DependencyParserError
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DependencyParserError(plain)
+	return nil
+}
+
+type DependencyResolutionStats struct {
+	// DependencyCount corresponds to the JSON schema field "dependency_count".
+	DependencyCount int `json:"dependency_count" yaml:"dependency_count" mapstructure:"dependency_count"`
+
+	// Ecosystem corresponds to the JSON schema field "ecosystem".
+	Ecosystem DependencyResolutionStatsEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+
+	// ResolutionMethod corresponds to the JSON schema field "resolution_method".
+	ResolutionMethod DependencyResolutionStatsResolutionMethod `json:"resolution_method" yaml:"resolution_method" mapstructure:"resolution_method"`
+}
+
+type DependencyResolutionStatsEcosystem interface{}
+
+type DependencyResolutionStatsResolutionMethod interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DependencyResolutionStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_count"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_count in DependencyResolutionStats: required")
+	}
+	if _, ok := raw["ecosystem"]; raw != nil && !ok {
+		return fmt.Errorf("field ecosystem in DependencyResolutionStats: required")
+	}
+	if _, ok := raw["resolution_method"]; raw != nil && !ok {
+		return fmt.Errorf("field resolution_method in DependencyResolutionStats: required")
+	}
+	type Plain DependencyResolutionStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DependencyResolutionStats(plain)
+	return nil
+}
+
+type DependencySource interface{}
+
+type DependencySourceFile struct {
+	// Kind corresponds to the JSON schema field "kind".
+	Kind DependencySourceFileKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+}
+
+type DependencySourceFileKind interface{}
+
+type DependencySourceFileKind_1 interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DependencySourceFile) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["kind"]; raw != nil && !ok {
+		return fmt.Errorf("field kind in DependencySourceFile: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in DependencySourceFile: required")
+	}
+	type Plain DependencySourceFile
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DependencySourceFile(plain)
+	return nil
+}
 
 type DeploymentConfig struct {
 	// DefaultUserRole corresponds to the JSON schema field "default_user_role".
@@ -1879,20 +1464,20 @@ type DeploymentConfig struct {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *DeploymentConfig) UnmarshalJSON(b []byte) error {
+func (j *DeploymentConfig) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["id"]; !ok || v == nil {
+	if _, ok := raw["id"]; raw != nil && !ok {
 		return fmt.Errorf("field id in DeploymentConfig: required")
 	}
-	if v, ok := raw["name"]; !ok || v == nil {
+	if _, ok := raw["name"]; raw != nil && !ok {
 		return fmt.Errorf("field name in DeploymentConfig: required")
 	}
 	type Plain DeploymentConfig
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = DeploymentConfig(plain)
@@ -1905,30 +1490,810 @@ type DeploymentResponse struct {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *DeploymentResponse) UnmarshalJSON(b []byte) error {
+func (j *DeploymentResponse) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["deployment"]; !ok || v == nil {
+	if _, ok := raw["deployment"]; raw != nil && !ok {
 		return fmt.Errorf("field deployment in DeploymentResponse: required")
 	}
 	type Plain DeploymentResponse
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = DeploymentResponse(plain)
 	return nil
 }
 
+type DiffFile struct {
+	// Diffs corresponds to the JSON schema field "diffs".
+	Diffs []string `json:"diffs" yaml:"diffs" mapstructure:"diffs"`
+
+	// Filename corresponds to the JSON schema field "filename".
+	Filename Fpath `json:"filename" yaml:"filename" mapstructure:"filename"`
+
+	// Url corresponds to the JSON schema field "url".
+	Url string `json:"url" yaml:"url" mapstructure:"url"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DiffFile) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["diffs"]; raw != nil && !ok {
+		return fmt.Errorf("field diffs in DiffFile: required")
+	}
+	if _, ok := raw["filename"]; raw != nil && !ok {
+		return fmt.Errorf("field filename in DiffFile: required")
+	}
+	if _, ok := raw["url"]; raw != nil && !ok {
+		return fmt.Errorf("field url in DiffFile: required")
+	}
+	type Plain DiffFile
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DiffFile(plain)
+	return nil
+}
+
+type DiffFiles struct {
+	// CveDiffs corresponds to the JSON schema field "cve_diffs".
+	CveDiffs []DiffFile `json:"cve_diffs" yaml:"cve_diffs" mapstructure:"cve_diffs"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DiffFiles) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["cve_diffs"]; raw != nil && !ok {
+		return fmt.Errorf("field cve_diffs in DiffFiles: required")
+	}
+	type Plain DiffFiles
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DiffFiles(plain)
+	return nil
+}
+
+type DownloadedDependency struct {
+	// SourcePaths corresponds to the JSON schema field "source_paths".
+	SourcePaths []Fpath `json:"source_paths" yaml:"source_paths" mapstructure:"source_paths"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DownloadedDependency) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["source_paths"]; raw != nil && !ok {
+		return fmt.Errorf("field source_paths in DownloadedDependency: required")
+	}
+	type Plain DownloadedDependency
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DownloadedDependency(plain)
+	return nil
+}
+
+type DumpRulePartitionsParams struct {
+	// NPartitions corresponds to the JSON schema field "n_partitions".
+	NPartitions int `json:"n_partitions" yaml:"n_partitions" mapstructure:"n_partitions"`
+
+	// OutputDir corresponds to the JSON schema field "output_dir".
+	OutputDir Fpath `json:"output_dir" yaml:"output_dir" mapstructure:"output_dir"`
+
+	// Rules corresponds to the JSON schema field "rules".
+	Rules DumpRulePartitionsParamsRules `json:"rules" yaml:"rules" mapstructure:"rules"`
+
+	// Strategy corresponds to the JSON schema field "strategy".
+	Strategy *string `json:"strategy,omitempty" yaml:"strategy,omitempty" mapstructure:"strategy,omitempty"`
+}
+
+type DumpRulePartitionsParamsRules interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *DumpRulePartitionsParams) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["n_partitions"]; raw != nil && !ok {
+		return fmt.Errorf("field n_partitions in DumpRulePartitionsParams: required")
+	}
+	if _, ok := raw["output_dir"]; raw != nil && !ok {
+		return fmt.Errorf("field output_dir in DumpRulePartitionsParams: required")
+	}
+	if _, ok := raw["rules"]; raw != nil && !ok {
+		return fmt.Errorf("field rules in DumpRulePartitionsParams: required")
+	}
+	type Plain DumpRulePartitionsParams
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = DumpRulePartitionsParams(plain)
+	return nil
+}
+
 type Ecosystem interface{}
+
+type Edit struct {
+	// EndOffset corresponds to the JSON schema field "end_offset".
+	EndOffset int `json:"end_offset" yaml:"end_offset" mapstructure:"end_offset"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+
+	// ReplacementText corresponds to the JSON schema field "replacement_text".
+	ReplacementText string `json:"replacement_text" yaml:"replacement_text" mapstructure:"replacement_text"`
+
+	// StartOffset corresponds to the JSON schema field "start_offset".
+	StartOffset int `json:"start_offset" yaml:"start_offset" mapstructure:"start_offset"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Edit) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["end_offset"]; raw != nil && !ok {
+		return fmt.Errorf("field end_offset in Edit: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in Edit: required")
+	}
+	if _, ok := raw["replacement_text"]; raw != nil && !ok {
+		return fmt.Errorf("field replacement_text in Edit: required")
+	}
+	if _, ok := raw["start_offset"]; raw != nil && !ok {
+		return fmt.Errorf("field start_offset in Edit: required")
+	}
+	type Plain Edit
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Edit(plain)
+	return nil
+}
+
+type EngineConfiguration struct {
+	// AlwaysSuppressErrors corresponds to the JSON schema field
+	// "always_suppress_errors".
+	AlwaysSuppressErrors *bool `json:"always_suppress_errors,omitempty" yaml:"always_suppress_errors,omitempty" mapstructure:"always_suppress_errors,omitempty"`
+
+	// Autofix corresponds to the JSON schema field "autofix".
+	Autofix *bool `json:"autofix,omitempty" yaml:"autofix,omitempty" mapstructure:"autofix,omitempty"`
+
+	// Deepsemgrep corresponds to the JSON schema field "deepsemgrep".
+	Deepsemgrep *bool `json:"deepsemgrep,omitempty" yaml:"deepsemgrep,omitempty" mapstructure:"deepsemgrep,omitempty"`
+
+	// DependencyQuery corresponds to the JSON schema field "dependency_query".
+	DependencyQuery *bool `json:"dependency_query,omitempty" yaml:"dependency_query,omitempty" mapstructure:"dependency_query,omitempty"`
+
+	// GenericSlowRollout corresponds to the JSON schema field "generic_slow_rollout".
+	GenericSlowRollout *bool `json:"generic_slow_rollout,omitempty" yaml:"generic_slow_rollout,omitempty" mapstructure:"generic_slow_rollout,omitempty"`
+
+	// HistoricalConfig corresponds to the JSON schema field "historical_config".
+	HistoricalConfig *HistoricalConfiguration `json:"historical_config,omitempty" yaml:"historical_config,omitempty" mapstructure:"historical_config,omitempty"`
+
+	// IgnoredFiles corresponds to the JSON schema field "ignored_files".
+	IgnoredFiles []string `json:"ignored_files,omitempty" yaml:"ignored_files,omitempty" mapstructure:"ignored_files,omitempty"`
+
+	// PathToTransitivity corresponds to the JSON schema field "path_to_transitivity".
+	PathToTransitivity *bool `json:"path_to_transitivity,omitempty" yaml:"path_to_transitivity,omitempty" mapstructure:"path_to_transitivity,omitempty"`
+
+	// ProductIgnoredFiles corresponds to the JSON schema field
+	// "product_ignored_files".
+	ProductIgnoredFiles ProductIgnoredFiles `json:"product_ignored_files,omitempty" yaml:"product_ignored_files,omitempty" mapstructure:"product_ignored_files,omitempty"`
+
+	// ScanAllDepsInDiffScan corresponds to the JSON schema field
+	// "scan_all_deps_in_diff_scan".
+	ScanAllDepsInDiffScan *bool `json:"scan_all_deps_in_diff_scan,omitempty" yaml:"scan_all_deps_in_diff_scan,omitempty" mapstructure:"scan_all_deps_in_diff_scan,omitempty"`
+
+	// SymbolAnalysis corresponds to the JSON schema field "symbol_analysis".
+	SymbolAnalysis *bool `json:"symbol_analysis,omitempty" yaml:"symbol_analysis,omitempty" mapstructure:"symbol_analysis,omitempty"`
+
+	// TransitiveReachabilityEnabled corresponds to the JSON schema field
+	// "transitive_reachability_enabled".
+	TransitiveReachabilityEnabled *bool `json:"transitive_reachability_enabled,omitempty" yaml:"transitive_reachability_enabled,omitempty" mapstructure:"transitive_reachability_enabled,omitempty"`
+}
 
 type EngineKind interface{}
 
+type EngineOfFinding interface{}
+
 type ErrorSeverity interface{}
 
+type ErrorSpan struct {
+	// ConfigEnd corresponds to the JSON schema field "config_end".
+	ConfigEnd *Position `json:"config_end,omitempty" yaml:"config_end,omitempty" mapstructure:"config_end,omitempty"`
+
+	// ConfigPath corresponds to the JSON schema field "config_path".
+	ConfigPath []string `json:"config_path,omitempty" yaml:"config_path,omitempty" mapstructure:"config_path,omitempty"`
+
+	// ConfigStart corresponds to the JSON schema field "config_start".
+	ConfigStart *Position `json:"config_start,omitempty" yaml:"config_start,omitempty" mapstructure:"config_start,omitempty"`
+
+	// ContextEnd corresponds to the JSON schema field "context_end".
+	ContextEnd *Position `json:"context_end,omitempty" yaml:"context_end,omitempty" mapstructure:"context_end,omitempty"`
+
+	// ContextStart corresponds to the JSON schema field "context_start".
+	ContextStart *Position `json:"context_start,omitempty" yaml:"context_start,omitempty" mapstructure:"context_start,omitempty"`
+
+	// End corresponds to the JSON schema field "end".
+	End Position `json:"end" yaml:"end" mapstructure:"end"`
+
+	// File corresponds to the JSON schema field "file".
+	File Fpath `json:"file" yaml:"file" mapstructure:"file"`
+
+	// SourceHash corresponds to the JSON schema field "source_hash".
+	SourceHash *string `json:"source_hash,omitempty" yaml:"source_hash,omitempty" mapstructure:"source_hash,omitempty"`
+
+	// Start corresponds to the JSON schema field "start".
+	Start Position `json:"start" yaml:"start" mapstructure:"start"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ErrorSpan) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["end"]; raw != nil && !ok {
+		return fmt.Errorf("field end in ErrorSpan: required")
+	}
+	if _, ok := raw["file"]; raw != nil && !ok {
+		return fmt.Errorf("field file in ErrorSpan: required")
+	}
+	if _, ok := raw["start"]; raw != nil && !ok {
+		return fmt.Errorf("field start in ErrorSpan: required")
+	}
+	type Plain ErrorSpan
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ErrorSpan(plain)
+	return nil
+}
+
 type ErrorType interface{}
+
+type ExpectedReported struct {
+	// ExpectedLines corresponds to the JSON schema field "expected_lines".
+	ExpectedLines []int `json:"expected_lines" yaml:"expected_lines" mapstructure:"expected_lines"`
+
+	// ReportedLines corresponds to the JSON schema field "reported_lines".
+	ReportedLines []int `json:"reported_lines" yaml:"reported_lines" mapstructure:"reported_lines"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ExpectedReported) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["expected_lines"]; raw != nil && !ok {
+		return fmt.Errorf("field expected_lines in ExpectedReported: required")
+	}
+	if _, ok := raw["reported_lines"]; raw != nil && !ok {
+		return fmt.Errorf("field reported_lines in ExpectedReported: required")
+	}
+	type Plain ExpectedReported
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ExpectedReported(plain)
+	return nil
+}
+
+type Features struct {
+	// Autofix corresponds to the JSON schema field "autofix".
+	Autofix *bool `json:"autofix,omitempty" yaml:"autofix,omitempty" mapstructure:"autofix,omitempty"`
+
+	// Deepsemgrep corresponds to the JSON schema field "deepsemgrep".
+	Deepsemgrep *bool `json:"deepsemgrep,omitempty" yaml:"deepsemgrep,omitempty" mapstructure:"deepsemgrep,omitempty"`
+
+	// DependencyQuery corresponds to the JSON schema field "dependency_query".
+	DependencyQuery *bool `json:"dependency_query,omitempty" yaml:"dependency_query,omitempty" mapstructure:"dependency_query,omitempty"`
+
+	// PathToTransitivity corresponds to the JSON schema field "path_to_transitivity".
+	PathToTransitivity *bool `json:"path_to_transitivity,omitempty" yaml:"path_to_transitivity,omitempty" mapstructure:"path_to_transitivity,omitempty"`
+
+	// ScanAllDepsInDiffScan corresponds to the JSON schema field
+	// "scan_all_deps_in_diff_scan".
+	ScanAllDepsInDiffScan *bool `json:"scan_all_deps_in_diff_scan,omitempty" yaml:"scan_all_deps_in_diff_scan,omitempty" mapstructure:"scan_all_deps_in_diff_scan,omitempty"`
+
+	// SymbolAnalysis corresponds to the JSON schema field "symbol_analysis".
+	SymbolAnalysis *bool `json:"symbol_analysis,omitempty" yaml:"symbol_analysis,omitempty" mapstructure:"symbol_analysis,omitempty"`
+
+	// TransitiveReachabilityEnabled corresponds to the JSON schema field
+	// "transitive_reachability_enabled".
+	TransitiveReachabilityEnabled *bool `json:"transitive_reachability_enabled,omitempty" yaml:"transitive_reachability_enabled,omitempty" mapstructure:"transitive_reachability_enabled,omitempty"`
+}
+
+type FileRuleTime struct {
+	// Fpath corresponds to the JSON schema field "fpath".
+	Fpath Fpath `json:"fpath" yaml:"fpath" mapstructure:"fpath"`
+
+	// RuleId corresponds to the JSON schema field "rule_id".
+	RuleId RuleId `json:"rule_id" yaml:"rule_id" mapstructure:"rule_id"`
+
+	// Time corresponds to the JSON schema field "time".
+	Time float64 `json:"time" yaml:"time" mapstructure:"time"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *FileRuleTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["fpath"]; raw != nil && !ok {
+		return fmt.Errorf("field fpath in FileRuleTime: required")
+	}
+	if _, ok := raw["rule_id"]; raw != nil && !ok {
+		return fmt.Errorf("field rule_id in FileRuleTime: required")
+	}
+	if _, ok := raw["time"]; raw != nil && !ok {
+		return fmt.Errorf("field time in FileRuleTime: required")
+	}
+	type Plain FileRuleTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = FileRuleTime(plain)
+	return nil
+}
+
+type FileTime struct {
+	// Fpath corresponds to the JSON schema field "fpath".
+	Fpath Fpath `json:"fpath" yaml:"fpath" mapstructure:"fpath"`
+
+	// Ftime corresponds to the JSON schema field "ftime".
+	Ftime float64 `json:"ftime" yaml:"ftime" mapstructure:"ftime"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *FileTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["fpath"]; raw != nil && !ok {
+		return fmt.Errorf("field fpath in FileTime: required")
+	}
+	if _, ok := raw["ftime"]; raw != nil && !ok {
+		return fmt.Errorf("field ftime in FileTime: required")
+	}
+	type Plain FileTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = FileTime(plain)
+	return nil
+}
+
+type Finding struct {
+	// CheckId corresponds to the JSON schema field "check_id".
+	CheckId RuleId `json:"check_id" yaml:"check_id" mapstructure:"check_id"`
+
+	// Column corresponds to the JSON schema field "column".
+	Column int `json:"column" yaml:"column" mapstructure:"column"`
+
+	// CommitDate corresponds to the JSON schema field "commit_date".
+	CommitDate string `json:"commit_date" yaml:"commit_date" mapstructure:"commit_date"`
+
+	// DataflowTrace corresponds to the JSON schema field "dataflow_trace".
+	DataflowTrace *MatchDataflowTrace `json:"dataflow_trace,omitempty" yaml:"dataflow_trace,omitempty" mapstructure:"dataflow_trace,omitempty"`
+
+	// EndColumn corresponds to the JSON schema field "end_column".
+	EndColumn int `json:"end_column" yaml:"end_column" mapstructure:"end_column"`
+
+	// EndLine corresponds to the JSON schema field "end_line".
+	EndLine int `json:"end_line" yaml:"end_line" mapstructure:"end_line"`
+
+	// EngineKind corresponds to the JSON schema field "engine_kind".
+	EngineKind FindingEngineKind `json:"engine_kind,omitempty" yaml:"engine_kind,omitempty" mapstructure:"engine_kind,omitempty"`
+
+	// FixedLines corresponds to the JSON schema field "fixed_lines".
+	FixedLines []string `json:"fixed_lines,omitempty" yaml:"fixed_lines,omitempty" mapstructure:"fixed_lines,omitempty"`
+
+	// Hashes corresponds to the JSON schema field "hashes".
+	Hashes *FindingHashes `json:"hashes,omitempty" yaml:"hashes,omitempty" mapstructure:"hashes,omitempty"`
+
+	// HistoricalInfo corresponds to the JSON schema field "historical_info".
+	HistoricalInfo *HistoricalInfo `json:"historical_info,omitempty" yaml:"historical_info,omitempty" mapstructure:"historical_info,omitempty"`
+
+	// Index corresponds to the JSON schema field "index".
+	Index int `json:"index" yaml:"index" mapstructure:"index"`
+
+	// IsBlocking corresponds to the JSON schema field "is_blocking".
+	IsBlocking bool `json:"is_blocking" yaml:"is_blocking" mapstructure:"is_blocking"`
+
+	// Line corresponds to the JSON schema field "line".
+	Line int `json:"line" yaml:"line" mapstructure:"line"`
+
+	// MatchBasedId corresponds to the JSON schema field "match_based_id".
+	MatchBasedId *string `json:"match_based_id,omitempty" yaml:"match_based_id,omitempty" mapstructure:"match_based_id,omitempty"`
+
+	// Message corresponds to the JSON schema field "message".
+	Message string `json:"message" yaml:"message" mapstructure:"message"`
+
+	// Metadata corresponds to the JSON schema field "metadata".
+	Metadata FindingMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+
+	// ScaInfo corresponds to the JSON schema field "sca_info".
+	ScaInfo *ScaMatch `json:"sca_info,omitempty" yaml:"sca_info,omitempty" mapstructure:"sca_info,omitempty"`
+
+	// Severity corresponds to the JSON schema field "severity".
+	Severity interface{} `json:"severity" yaml:"severity" mapstructure:"severity"`
+
+	// SyntacticId corresponds to the JSON schema field "syntactic_id".
+	SyntacticId string `json:"syntactic_id" yaml:"syntactic_id" mapstructure:"syntactic_id"`
+
+	// ValidationState corresponds to the JSON schema field "validation_state".
+	ValidationState FindingValidationState `json:"validation_state,omitempty" yaml:"validation_state,omitempty" mapstructure:"validation_state,omitempty"`
+}
+
+type FindingEngineKind interface{}
+
+type FindingHashes struct {
+	// CodeHash corresponds to the JSON schema field "code_hash".
+	CodeHash string `json:"code_hash" yaml:"code_hash" mapstructure:"code_hash"`
+
+	// EndLineHash corresponds to the JSON schema field "end_line_hash".
+	EndLineHash string `json:"end_line_hash" yaml:"end_line_hash" mapstructure:"end_line_hash"`
+
+	// PatternHash corresponds to the JSON schema field "pattern_hash".
+	PatternHash string `json:"pattern_hash" yaml:"pattern_hash" mapstructure:"pattern_hash"`
+
+	// StartLineHash corresponds to the JSON schema field "start_line_hash".
+	StartLineHash string `json:"start_line_hash" yaml:"start_line_hash" mapstructure:"start_line_hash"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *FindingHashes) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["code_hash"]; raw != nil && !ok {
+		return fmt.Errorf("field code_hash in FindingHashes: required")
+	}
+	if _, ok := raw["end_line_hash"]; raw != nil && !ok {
+		return fmt.Errorf("field end_line_hash in FindingHashes: required")
+	}
+	if _, ok := raw["pattern_hash"]; raw != nil && !ok {
+		return fmt.Errorf("field pattern_hash in FindingHashes: required")
+	}
+	if _, ok := raw["start_line_hash"]; raw != nil && !ok {
+		return fmt.Errorf("field start_line_hash in FindingHashes: required")
+	}
+	type Plain FindingHashes
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = FindingHashes(plain)
+	return nil
+}
+
+type FindingMetadata interface{}
+
+type FindingValidationState interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Finding) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["check_id"]; raw != nil && !ok {
+		return fmt.Errorf("field check_id in Finding: required")
+	}
+	if _, ok := raw["column"]; raw != nil && !ok {
+		return fmt.Errorf("field column in Finding: required")
+	}
+	if _, ok := raw["commit_date"]; raw != nil && !ok {
+		return fmt.Errorf("field commit_date in Finding: required")
+	}
+	if _, ok := raw["end_column"]; raw != nil && !ok {
+		return fmt.Errorf("field end_column in Finding: required")
+	}
+	if _, ok := raw["end_line"]; raw != nil && !ok {
+		return fmt.Errorf("field end_line in Finding: required")
+	}
+	if _, ok := raw["index"]; raw != nil && !ok {
+		return fmt.Errorf("field index in Finding: required")
+	}
+	if _, ok := raw["is_blocking"]; raw != nil && !ok {
+		return fmt.Errorf("field is_blocking in Finding: required")
+	}
+	if _, ok := raw["line"]; raw != nil && !ok {
+		return fmt.Errorf("field line in Finding: required")
+	}
+	if _, ok := raw["message"]; raw != nil && !ok {
+		return fmt.Errorf("field message in Finding: required")
+	}
+	if _, ok := raw["metadata"]; raw != nil && !ok {
+		return fmt.Errorf("field metadata in Finding: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in Finding: required")
+	}
+	if _, ok := raw["severity"]; raw != nil && !ok {
+		return fmt.Errorf("field severity in Finding: required")
+	}
+	if _, ok := raw["syntactic_id"]; raw != nil && !ok {
+		return fmt.Errorf("field syntactic_id in Finding: required")
+	}
+	type Plain Finding
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Finding(plain)
+	return nil
+}
+
+type FixtestResult struct {
+	// Passed corresponds to the JSON schema field "passed".
+	Passed bool `json:"passed" yaml:"passed" mapstructure:"passed"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *FixtestResult) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["passed"]; raw != nil && !ok {
+		return fmt.Errorf("field passed in FixtestResult: required")
+	}
+	type Plain FixtestResult
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = FixtestResult(plain)
+	return nil
+}
+
+type FormatContext struct {
+	// IsCiInvocation corresponds to the JSON schema field "is_ci_invocation".
+	IsCiInvocation bool `json:"is_ci_invocation" yaml:"is_ci_invocation" mapstructure:"is_ci_invocation"`
+
+	// IsLoggedIn corresponds to the JSON schema field "is_logged_in".
+	IsLoggedIn bool `json:"is_logged_in" yaml:"is_logged_in" mapstructure:"is_logged_in"`
+
+	// IsUsingRegistry corresponds to the JSON schema field "is_using_registry".
+	IsUsingRegistry bool `json:"is_using_registry" yaml:"is_using_registry" mapstructure:"is_using_registry"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *FormatContext) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["is_ci_invocation"]; raw != nil && !ok {
+		return fmt.Errorf("field is_ci_invocation in FormatContext: required")
+	}
+	if _, ok := raw["is_logged_in"]; raw != nil && !ok {
+		return fmt.Errorf("field is_logged_in in FormatContext: required")
+	}
+	if _, ok := raw["is_using_registry"]; raw != nil && !ok {
+		return fmt.Errorf("field is_using_registry in FormatContext: required")
+	}
+	type Plain FormatContext
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = FormatContext(plain)
+	return nil
+}
+
+type FoundDependency struct {
+	// AllowedHashes corresponds to the JSON schema field "allowed_hashes".
+	AllowedHashes map[string][]string `json:"allowed_hashes" yaml:"allowed_hashes" mapstructure:"allowed_hashes"`
+
+	// Children corresponds to the JSON schema field "children".
+	Children []DependencyChild `json:"children,omitempty" yaml:"children,omitempty" mapstructure:"children,omitempty"`
+
+	// Ecosystem corresponds to the JSON schema field "ecosystem".
+	Ecosystem FoundDependencyEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+
+	// GitRef corresponds to the JSON schema field "git_ref".
+	GitRef *string `json:"git_ref,omitempty" yaml:"git_ref,omitempty" mapstructure:"git_ref,omitempty"`
+
+	// LineNumber corresponds to the JSON schema field "line_number".
+	LineNumber *int `json:"line_number,omitempty" yaml:"line_number,omitempty" mapstructure:"line_number,omitempty"`
+
+	// LockfilePath corresponds to the JSON schema field "lockfile_path".
+	LockfilePath *Fpath `json:"lockfile_path,omitempty" yaml:"lockfile_path,omitempty" mapstructure:"lockfile_path,omitempty"`
+
+	// ManifestPath corresponds to the JSON schema field "manifest_path".
+	ManifestPath *Fpath `json:"manifest_path,omitempty" yaml:"manifest_path,omitempty" mapstructure:"manifest_path,omitempty"`
+
+	// Package corresponds to the JSON schema field "package".
+	Package string `json:"package" yaml:"package" mapstructure:"package"`
+
+	// ResolvedUrl corresponds to the JSON schema field "resolved_url".
+	ResolvedUrl *string `json:"resolved_url,omitempty" yaml:"resolved_url,omitempty" mapstructure:"resolved_url,omitempty"`
+
+	// Transitivity corresponds to the JSON schema field "transitivity".
+	Transitivity FoundDependencyTransitivity `json:"transitivity" yaml:"transitivity" mapstructure:"transitivity"`
+
+	// Version corresponds to the JSON schema field "version".
+	Version string `json:"version" yaml:"version" mapstructure:"version"`
+}
+
+type FoundDependencyEcosystem interface{}
+
+type FoundDependencyTransitivity interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *FoundDependency) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["allowed_hashes"]; raw != nil && !ok {
+		return fmt.Errorf("field allowed_hashes in FoundDependency: required")
+	}
+	if _, ok := raw["ecosystem"]; raw != nil && !ok {
+		return fmt.Errorf("field ecosystem in FoundDependency: required")
+	}
+	if _, ok := raw["package"]; raw != nil && !ok {
+		return fmt.Errorf("field package in FoundDependency: required")
+	}
+	if _, ok := raw["transitivity"]; raw != nil && !ok {
+		return fmt.Errorf("field transitivity in FoundDependency: required")
+	}
+	if _, ok := raw["version"]; raw != nil && !ok {
+		return fmt.Errorf("field version in FoundDependency: required")
+	}
+	type Plain FoundDependency
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = FoundDependency(plain)
+	return nil
+}
+
+type Fpath string
+
+type Fppath struct {
+	// Fpath corresponds to the JSON schema field "fpath".
+	Fpath Fpath `json:"fpath" yaml:"fpath" mapstructure:"fpath"`
+
+	// Ppath corresponds to the JSON schema field "ppath".
+	Ppath Ppath `json:"ppath" yaml:"ppath" mapstructure:"ppath"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Fppath) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["fpath"]; raw != nil && !ok {
+		return fmt.Errorf("field fpath in Fppath: required")
+	}
+	if _, ok := raw["ppath"]; raw != nil && !ok {
+		return fmt.Errorf("field ppath in Fppath: required")
+	}
+	type Plain Fppath
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Fppath(plain)
+	return nil
+}
+
+type FunctionCall interface{}
+
+type FunctionReturn interface{}
+
+type Glob string
+
+type HasFeatures struct {
+	// HasAutofix corresponds to the JSON schema field "has_autofix".
+	HasAutofix *bool `json:"has_autofix,omitempty" yaml:"has_autofix,omitempty" mapstructure:"has_autofix,omitempty"`
+
+	// HasDeepsemgrep corresponds to the JSON schema field "has_deepsemgrep".
+	HasDeepsemgrep *bool `json:"has_deepsemgrep,omitempty" yaml:"has_deepsemgrep,omitempty" mapstructure:"has_deepsemgrep,omitempty"`
+
+	// HasDependencyQuery corresponds to the JSON schema field "has_dependency_query".
+	HasDependencyQuery *bool `json:"has_dependency_query,omitempty" yaml:"has_dependency_query,omitempty" mapstructure:"has_dependency_query,omitempty"`
+
+	// HasTriageViaComment corresponds to the JSON schema field
+	// "has_triage_via_comment".
+	HasTriageViaComment *bool `json:"has_triage_via_comment,omitempty" yaml:"has_triage_via_comment,omitempty" mapstructure:"has_triage_via_comment,omitempty"`
+}
+
+type HistoricalConfiguration struct {
+	// Enabled corresponds to the JSON schema field "enabled".
+	Enabled bool `json:"enabled" yaml:"enabled" mapstructure:"enabled"`
+
+	// LookbackDays corresponds to the JSON schema field "lookback_days".
+	LookbackDays *int `json:"lookback_days,omitempty" yaml:"lookback_days,omitempty" mapstructure:"lookback_days,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HistoricalConfiguration) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["enabled"]; raw != nil && !ok {
+		return fmt.Errorf("field enabled in HistoricalConfiguration: required")
+	}
+	type Plain HistoricalConfiguration
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = HistoricalConfiguration(plain)
+	return nil
+}
+
+type HistoricalInfo struct {
+	// GitBlob corresponds to the JSON schema field "git_blob".
+	GitBlob *Sha1 `json:"git_blob,omitempty" yaml:"git_blob,omitempty" mapstructure:"git_blob,omitempty"`
+
+	// GitCommit corresponds to the JSON schema field "git_commit".
+	GitCommit Sha1 `json:"git_commit" yaml:"git_commit" mapstructure:"git_commit"`
+
+	// GitCommitTimestamp corresponds to the JSON schema field "git_commit_timestamp".
+	GitCommitTimestamp Datetime `json:"git_commit_timestamp" yaml:"git_commit_timestamp" mapstructure:"git_commit_timestamp"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HistoricalInfo) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["git_commit"]; raw != nil && !ok {
+		return fmt.Errorf("field git_commit in HistoricalInfo: required")
+	}
+	if _, ok := raw["git_commit_timestamp"]; raw != nil && !ok {
+		return fmt.Errorf("field git_commit_timestamp in HistoricalInfo: required")
+	}
+	type Plain HistoricalInfo
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = HistoricalInfo(plain)
+	return nil
+}
 
 type IncompatibleRule struct {
 	// MaxVersion corresponds to the JSON schema field "max_version".
@@ -1945,39 +2310,725 @@ type IncompatibleRule struct {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *IncompatibleRule) UnmarshalJSON(b []byte) error {
+func (j *IncompatibleRule) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["rule_id"]; !ok || v == nil {
+	if _, ok := raw["rule_id"]; raw != nil && !ok {
 		return fmt.Errorf("field rule_id in IncompatibleRule: required")
 	}
-	if v, ok := raw["this_version"]; !ok || v == nil {
+	if _, ok := raw["this_version"]; raw != nil && !ok {
 		return fmt.Errorf("field this_version in IncompatibleRule: required")
 	}
 	type Plain IncompatibleRule
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = IncompatibleRule(plain)
 	return nil
 }
 
+type KillingParent struct {
+	// KillingParentKind corresponds to the JSON schema field "killing_parent_kind".
+	KillingParentKind KillingParentKillingParentKind `json:"killing_parent_kind" yaml:"killing_parent_kind" mapstructure:"killing_parent_kind"`
+
+	// Snippet corresponds to the JSON schema field "snippet".
+	Snippet Snippet `json:"snippet" yaml:"snippet" mapstructure:"snippet"`
+}
+
+type KillingParentKillingParentKind interface{}
+
+type KillingParentKind interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *KillingParent) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["killing_parent_kind"]; raw != nil && !ok {
+		return fmt.Errorf("field killing_parent_kind in KillingParent: required")
+	}
+	if _, ok := raw["snippet"]; raw != nil && !ok {
+		return fmt.Errorf("field snippet in KillingParent: required")
+	}
+	type Plain KillingParent
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = KillingParent(plain)
+	return nil
+}
+
+type LocAndContent []interface{}
+
+type Location struct {
+	// End corresponds to the JSON schema field "end".
+	End Position `json:"end" yaml:"end" mapstructure:"end"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+
+	// Start corresponds to the JSON schema field "start".
+	Start Position `json:"start" yaml:"start" mapstructure:"start"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Location) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["end"]; raw != nil && !ok {
+		return fmt.Errorf("field end in Location: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in Location: required")
+	}
+	if _, ok := raw["start"]; raw != nil && !ok {
+		return fmt.Errorf("field start in Location: required")
+	}
+	type Plain Location
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Location(plain)
+	return nil
+}
+
+type Lockfile struct {
+	// Kind corresponds to the JSON schema field "kind".
+	Kind LockfileKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+}
+
+type LockfileKind interface{}
+
+type LockfileKind_1 interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Lockfile) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["kind"]; raw != nil && !ok {
+		return fmt.Errorf("field kind in Lockfile: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in Lockfile: required")
+	}
+	type Plain Lockfile
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Lockfile(plain)
+	return nil
+}
+
+type Manifest struct {
+	// Kind corresponds to the JSON schema field "kind".
+	Kind ManifestKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+}
+
+type ManifestKind interface{}
+
+type ManifestKind_1 interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Manifest) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["kind"]; raw != nil && !ok {
+		return fmt.Errorf("field kind in Manifest: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in Manifest: required")
+	}
+	type Plain Manifest
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Manifest(plain)
+	return nil
+}
+
+type MatchBasedId string
+
 type MatchCallTrace interface{}
+
+type MatchDataflowTrace struct {
+	// IntermediateVars corresponds to the JSON schema field "intermediate_vars".
+	IntermediateVars []MatchIntermediateVar `json:"intermediate_vars,omitempty" yaml:"intermediate_vars,omitempty" mapstructure:"intermediate_vars,omitempty"`
+
+	// TaintSink corresponds to the JSON schema field "taint_sink".
+	TaintSink MatchDataflowTraceTaintSink `json:"taint_sink,omitempty" yaml:"taint_sink,omitempty" mapstructure:"taint_sink,omitempty"`
+
+	// TaintSource corresponds to the JSON schema field "taint_source".
+	TaintSource MatchDataflowTraceTaintSource `json:"taint_source,omitempty" yaml:"taint_source,omitempty" mapstructure:"taint_source,omitempty"`
+}
+
+type MatchDataflowTraceTaintSink interface{}
+
+type MatchDataflowTraceTaintSource interface{}
+
+type MatchIntermediateVar struct {
+	// Content corresponds to the JSON schema field "content".
+	Content string `json:"content" yaml:"content" mapstructure:"content"`
+
+	// Location corresponds to the JSON schema field "location".
+	Location Location `json:"location" yaml:"location" mapstructure:"location"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *MatchIntermediateVar) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["content"]; raw != nil && !ok {
+		return fmt.Errorf("field content in MatchIntermediateVar: required")
+	}
+	if _, ok := raw["location"]; raw != nil && !ok {
+		return fmt.Errorf("field location in MatchIntermediateVar: required")
+	}
+	type Plain MatchIntermediateVar
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = MatchIntermediateVar(plain)
+	return nil
+}
 
 type MatchSeverity interface{}
 
+type MatchingDiagnosis struct {
+	// Target corresponds to the JSON schema field "target".
+	Target Fpath `json:"target" yaml:"target" mapstructure:"target"`
+
+	// UnexpectedMatchDiagnoses corresponds to the JSON schema field
+	// "unexpected_match_diagnoses".
+	UnexpectedMatchDiagnoses []UnexpectedMatchDiagnosis `json:"unexpected_match_diagnoses" yaml:"unexpected_match_diagnoses" mapstructure:"unexpected_match_diagnoses"`
+
+	// UnexpectedNoMatchDiagnoses corresponds to the JSON schema field
+	// "unexpected_no_match_diagnoses".
+	UnexpectedNoMatchDiagnoses []UnexpectedNoMatchDiagnosis `json:"unexpected_no_match_diagnoses" yaml:"unexpected_no_match_diagnoses" mapstructure:"unexpected_no_match_diagnoses"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *MatchingDiagnosis) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["target"]; raw != nil && !ok {
+		return fmt.Errorf("field target in MatchingDiagnosis: required")
+	}
+	if _, ok := raw["unexpected_match_diagnoses"]; raw != nil && !ok {
+		return fmt.Errorf("field unexpected_match_diagnoses in MatchingDiagnosis: required")
+	}
+	if _, ok := raw["unexpected_no_match_diagnoses"]; raw != nil && !ok {
+		return fmt.Errorf("field unexpected_no_match_diagnoses in MatchingDiagnosis: required")
+	}
+	type Plain MatchingDiagnosis
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = MatchingDiagnosis(plain)
+	return nil
+}
+
+type MatchingExplanation struct {
+	// Children corresponds to the JSON schema field "children".
+	Children []MatchingExplanation `json:"children" yaml:"children" mapstructure:"children"`
+
+	// Extra corresponds to the JSON schema field "extra".
+	Extra *MatchingExplanationExtra `json:"extra,omitempty" yaml:"extra,omitempty" mapstructure:"extra,omitempty"`
+
+	// Loc corresponds to the JSON schema field "loc".
+	Loc Location `json:"loc" yaml:"loc" mapstructure:"loc"`
+
+	// Matches corresponds to the JSON schema field "matches".
+	Matches []CoreMatch `json:"matches" yaml:"matches" mapstructure:"matches"`
+
+	// Op corresponds to the JSON schema field "op".
+	Op MatchingExplanationOp `json:"op" yaml:"op" mapstructure:"op"`
+}
+
+type MatchingExplanationExtra struct {
+	// BeforeFilterMatches corresponds to the JSON schema field
+	// "before_filter_matches".
+	BeforeFilterMatches interface{} `json:"before_filter_matches" yaml:"before_filter_matches" mapstructure:"before_filter_matches"`
+
+	// BeforeNegationMatches corresponds to the JSON schema field
+	// "before_negation_matches".
+	BeforeNegationMatches interface{} `json:"before_negation_matches" yaml:"before_negation_matches" mapstructure:"before_negation_matches"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *MatchingExplanationExtra) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["before_filter_matches"]; raw != nil && !ok {
+		return fmt.Errorf("field before_filter_matches in MatchingExplanationExtra: required")
+	}
+	if _, ok := raw["before_negation_matches"]; raw != nil && !ok {
+		return fmt.Errorf("field before_negation_matches in MatchingExplanationExtra: required")
+	}
+	type Plain MatchingExplanationExtra
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = MatchingExplanationExtra(plain)
+	return nil
+}
+
+type MatchingExplanationOp interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *MatchingExplanation) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["children"]; raw != nil && !ok {
+		return fmt.Errorf("field children in MatchingExplanation: required")
+	}
+	if _, ok := raw["loc"]; raw != nil && !ok {
+		return fmt.Errorf("field loc in MatchingExplanation: required")
+	}
+	if _, ok := raw["matches"]; raw != nil && !ok {
+		return fmt.Errorf("field matches in MatchingExplanation: required")
+	}
+	if _, ok := raw["op"]; raw != nil && !ok {
+		return fmt.Errorf("field op in MatchingExplanation: required")
+	}
+	type Plain MatchingExplanation
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = MatchingExplanation(plain)
+	return nil
+}
+
 type MatchingOperation interface{}
+
+type MatchingTime struct {
+	// PerFileAndRuleTime corresponds to the JSON schema field
+	// "per_file_and_rule_time".
+	PerFileAndRuleTime SummaryStats `json:"per_file_and_rule_time" yaml:"per_file_and_rule_time" mapstructure:"per_file_and_rule_time"`
+
+	// TotalTime corresponds to the JSON schema field "total_time".
+	TotalTime float64 `json:"total_time" yaml:"total_time" mapstructure:"total_time"`
+
+	// VerySlowRulesOnFiles corresponds to the JSON schema field
+	// "very_slow_rules_on_files".
+	VerySlowRulesOnFiles []FileRuleTime `json:"very_slow_rules_on_files" yaml:"very_slow_rules_on_files" mapstructure:"very_slow_rules_on_files"`
+
+	// VerySlowStats corresponds to the JSON schema field "very_slow_stats".
+	VerySlowStats VerySlowStats `json:"very_slow_stats" yaml:"very_slow_stats" mapstructure:"very_slow_stats"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *MatchingTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["per_file_and_rule_time"]; raw != nil && !ok {
+		return fmt.Errorf("field per_file_and_rule_time in MatchingTime: required")
+	}
+	if _, ok := raw["total_time"]; raw != nil && !ok {
+		return fmt.Errorf("field total_time in MatchingTime: required")
+	}
+	if _, ok := raw["very_slow_rules_on_files"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_rules_on_files in MatchingTime: required")
+	}
+	if _, ok := raw["very_slow_stats"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_stats in MatchingTime: required")
+	}
+	type Plain MatchingTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = MatchingTime(plain)
+	return nil
+}
+
+type McpScanResults struct {
+	// Rules corresponds to the JSON schema field "rules".
+	Rules []string `json:"rules" yaml:"rules" mapstructure:"rules"`
+
+	// TotalBytesScanned corresponds to the JSON schema field "total_bytes_scanned".
+	TotalBytesScanned int `json:"total_bytes_scanned" yaml:"total_bytes_scanned" mapstructure:"total_bytes_scanned"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *McpScanResults) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["rules"]; raw != nil && !ok {
+		return fmt.Errorf("field rules in McpScanResults: required")
+	}
+	if _, ok := raw["total_bytes_scanned"]; raw != nil && !ok {
+		return fmt.Errorf("field total_bytes_scanned in McpScanResults: required")
+	}
+	type Plain McpScanResults
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = McpScanResults(plain)
+	return nil
+}
+
+type MetavarValue struct {
+	// AbstractContent corresponds to the JSON schema field "abstract_content".
+	AbstractContent string `json:"abstract_content" yaml:"abstract_content" mapstructure:"abstract_content"`
+
+	// End corresponds to the JSON schema field "end".
+	End Position `json:"end" yaml:"end" mapstructure:"end"`
+
+	// PropagatedValue corresponds to the JSON schema field "propagated_value".
+	PropagatedValue *SvalueValue `json:"propagated_value,omitempty" yaml:"propagated_value,omitempty" mapstructure:"propagated_value,omitempty"`
+
+	// Start corresponds to the JSON schema field "start".
+	Start Position `json:"start" yaml:"start" mapstructure:"start"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *MetavarValue) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["abstract_content"]; raw != nil && !ok {
+		return fmt.Errorf("field abstract_content in MetavarValue: required")
+	}
+	if _, ok := raw["end"]; raw != nil && !ok {
+		return fmt.Errorf("field end in MetavarValue: required")
+	}
+	if _, ok := raw["start"]; raw != nil && !ok {
+		return fmt.Errorf("field start in MetavarValue: required")
+	}
+	type Plain MetavarValue
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = MetavarValue(plain)
+	return nil
+}
+
+type OriginatingNodeKind interface{}
+
+type OutputFormat interface{}
+
+type ParsingStats struct {
+	// BytesParsed corresponds to the JSON schema field "bytes_parsed".
+	BytesParsed int `json:"bytes_parsed" yaml:"bytes_parsed" mapstructure:"bytes_parsed"`
+
+	// NumBytes corresponds to the JSON schema field "num_bytes".
+	NumBytes int `json:"num_bytes" yaml:"num_bytes" mapstructure:"num_bytes"`
+
+	// NumTargets corresponds to the JSON schema field "num_targets".
+	NumTargets int `json:"num_targets" yaml:"num_targets" mapstructure:"num_targets"`
+
+	// TargetsParsed corresponds to the JSON schema field "targets_parsed".
+	TargetsParsed int `json:"targets_parsed" yaml:"targets_parsed" mapstructure:"targets_parsed"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ParsingStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["bytes_parsed"]; raw != nil && !ok {
+		return fmt.Errorf("field bytes_parsed in ParsingStats: required")
+	}
+	if _, ok := raw["num_bytes"]; raw != nil && !ok {
+		return fmt.Errorf("field num_bytes in ParsingStats: required")
+	}
+	if _, ok := raw["num_targets"]; raw != nil && !ok {
+		return fmt.Errorf("field num_targets in ParsingStats: required")
+	}
+	if _, ok := raw["targets_parsed"]; raw != nil && !ok {
+		return fmt.Errorf("field targets_parsed in ParsingStats: required")
+	}
+	type Plain ParsingStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ParsingStats(plain)
+	return nil
+}
+
+type ParsingTime struct {
+	// PerFileTime corresponds to the JSON schema field "per_file_time".
+	PerFileTime SummaryStats `json:"per_file_time" yaml:"per_file_time" mapstructure:"per_file_time"`
+
+	// TotalTime corresponds to the JSON schema field "total_time".
+	TotalTime float64 `json:"total_time" yaml:"total_time" mapstructure:"total_time"`
+
+	// VerySlowFiles corresponds to the JSON schema field "very_slow_files".
+	VerySlowFiles []FileTime `json:"very_slow_files" yaml:"very_slow_files" mapstructure:"very_slow_files"`
+
+	// VerySlowStats corresponds to the JSON schema field "very_slow_stats".
+	VerySlowStats *VerySlowStats `json:"very_slow_stats,omitempty" yaml:"very_slow_stats,omitempty" mapstructure:"very_slow_stats,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ParsingTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["per_file_time"]; raw != nil && !ok {
+		return fmt.Errorf("field per_file_time in ParsingTime: required")
+	}
+	if _, ok := raw["total_time"]; raw != nil && !ok {
+		return fmt.Errorf("field total_time in ParsingTime: required")
+	}
+	if _, ok := raw["very_slow_files"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_files in ParsingTime: required")
+	}
+	type Plain ParsingTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ParsingTime(plain)
+	return nil
+}
+
+type PartialScanResult interface{}
+
+type Position struct {
+	// Col corresponds to the JSON schema field "col".
+	Col int `json:"col" yaml:"col" mapstructure:"col"`
+
+	// Line corresponds to the JSON schema field "line".
+	Line int `json:"line" yaml:"line" mapstructure:"line"`
+
+	// Offset corresponds to the JSON schema field "offset".
+	Offset *int `json:"offset,omitempty" yaml:"offset,omitempty" mapstructure:"offset,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Position) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["col"]; raw != nil && !ok {
+		return fmt.Errorf("field col in Position: required")
+	}
+	if _, ok := raw["line"]; raw != nil && !ok {
+		return fmt.Errorf("field line in Position: required")
+	}
+	type Plain Position
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Position(plain)
+	return nil
+}
+
+type Ppath string
+
+type PrefilteringStats struct {
+	// FileLevelTime corresponds to the JSON schema field "file_level_time".
+	FileLevelTime float64 `json:"file_level_time" yaml:"file_level_time" mapstructure:"file_level_time"`
+
+	// ProjectLevelTime corresponds to the JSON schema field "project_level_time".
+	ProjectLevelTime float64 `json:"project_level_time" yaml:"project_level_time" mapstructure:"project_level_time"`
+
+	// RulesMatchedRatio corresponds to the JSON schema field "rules_matched_ratio".
+	RulesMatchedRatio float64 `json:"rules_matched_ratio" yaml:"rules_matched_ratio" mapstructure:"rules_matched_ratio"`
+
+	// RulesSelectedRatio corresponds to the JSON schema field "rules_selected_ratio".
+	RulesSelectedRatio float64 `json:"rules_selected_ratio" yaml:"rules_selected_ratio" mapstructure:"rules_selected_ratio"`
+
+	// RulesWithFilePrefiltersRatio corresponds to the JSON schema field
+	// "rules_with_file_prefilters_ratio".
+	RulesWithFilePrefiltersRatio float64 `json:"rules_with_file_prefilters_ratio" yaml:"rules_with_file_prefilters_ratio" mapstructure:"rules_with_file_prefilters_ratio"`
+
+	// RulesWithProjectPrefiltersRatio corresponds to the JSON schema field
+	// "rules_with_project_prefilters_ratio".
+	RulesWithProjectPrefiltersRatio float64 `json:"rules_with_project_prefilters_ratio" yaml:"rules_with_project_prefilters_ratio" mapstructure:"rules_with_project_prefilters_ratio"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *PrefilteringStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["file_level_time"]; raw != nil && !ok {
+		return fmt.Errorf("field file_level_time in PrefilteringStats: required")
+	}
+	if _, ok := raw["project_level_time"]; raw != nil && !ok {
+		return fmt.Errorf("field project_level_time in PrefilteringStats: required")
+	}
+	if _, ok := raw["rules_matched_ratio"]; raw != nil && !ok {
+		return fmt.Errorf("field rules_matched_ratio in PrefilteringStats: required")
+	}
+	if _, ok := raw["rules_selected_ratio"]; raw != nil && !ok {
+		return fmt.Errorf("field rules_selected_ratio in PrefilteringStats: required")
+	}
+	if _, ok := raw["rules_with_file_prefilters_ratio"]; raw != nil && !ok {
+		return fmt.Errorf("field rules_with_file_prefilters_ratio in PrefilteringStats: required")
+	}
+	if _, ok := raw["rules_with_project_prefilters_ratio"]; raw != nil && !ok {
+		return fmt.Errorf("field rules_with_project_prefilters_ratio in PrefilteringStats: required")
+	}
+	type Plain PrefilteringStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = PrefilteringStats(plain)
+	return nil
+}
+
+type ProFeature struct {
+	// InterfileTaint corresponds to the JSON schema field "interfile_taint".
+	InterfileTaint bool `json:"interfile_taint" yaml:"interfile_taint" mapstructure:"interfile_taint"`
+
+	// InterprocTaint corresponds to the JSON schema field "interproc_taint".
+	InterprocTaint bool `json:"interproc_taint" yaml:"interproc_taint" mapstructure:"interproc_taint"`
+
+	// ProprietaryLanguage corresponds to the JSON schema field
+	// "proprietary_language".
+	ProprietaryLanguage bool `json:"proprietary_language" yaml:"proprietary_language" mapstructure:"proprietary_language"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ProFeature) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["interfile_taint"]; raw != nil && !ok {
+		return fmt.Errorf("field interfile_taint in ProFeature: required")
+	}
+	if _, ok := raw["interproc_taint"]; raw != nil && !ok {
+		return fmt.Errorf("field interproc_taint in ProFeature: required")
+	}
+	if _, ok := raw["proprietary_language"]; raw != nil && !ok {
+		return fmt.Errorf("field proprietary_language in ProFeature: required")
+	}
+	type Plain ProFeature
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ProFeature(plain)
+	return nil
+}
 
 type Product interface{}
 
-type Sha1 string
+type ProductIgnoredFiles [][]interface{}
 
-type Uri string
+type Profile struct {
+	// FixpointTimeouts corresponds to the JSON schema field "fixpoint_timeouts".
+	FixpointTimeouts []CoreError `json:"fixpoint_timeouts,omitempty" yaml:"fixpoint_timeouts,omitempty" mapstructure:"fixpoint_timeouts,omitempty"`
+
+	// MatchingTime corresponds to the JSON schema field "matching_time".
+	MatchingTime *MatchingTime `json:"matching_time,omitempty" yaml:"matching_time,omitempty" mapstructure:"matching_time,omitempty"`
+
+	// MaxMemoryBytes corresponds to the JSON schema field "max_memory_bytes".
+	MaxMemoryBytes *int `json:"max_memory_bytes,omitempty" yaml:"max_memory_bytes,omitempty" mapstructure:"max_memory_bytes,omitempty"`
+
+	// ParsingTime corresponds to the JSON schema field "parsing_time".
+	ParsingTime *ParsingTime `json:"parsing_time,omitempty" yaml:"parsing_time,omitempty" mapstructure:"parsing_time,omitempty"`
+
+	// Prefiltering corresponds to the JSON schema field "prefiltering".
+	Prefiltering *PrefilteringStats `json:"prefiltering,omitempty" yaml:"prefiltering,omitempty" mapstructure:"prefiltering,omitempty"`
+
+	// ProfilingTimes corresponds to the JSON schema field "profiling_times".
+	ProfilingTimes map[string]float64 `json:"profiling_times" yaml:"profiling_times" mapstructure:"profiling_times"`
+
+	// Rules corresponds to the JSON schema field "rules".
+	Rules []RuleId `json:"rules" yaml:"rules" mapstructure:"rules"`
+
+	// RulesParseTime corresponds to the JSON schema field "rules_parse_time".
+	RulesParseTime float64 `json:"rules_parse_time" yaml:"rules_parse_time" mapstructure:"rules_parse_time"`
+
+	// ScanningTime corresponds to the JSON schema field "scanning_time".
+	ScanningTime *ScanningTime `json:"scanning_time,omitempty" yaml:"scanning_time,omitempty" mapstructure:"scanning_time,omitempty"`
+
+	// TaintingTime corresponds to the JSON schema field "tainting_time".
+	TaintingTime *TaintingTime `json:"tainting_time,omitempty" yaml:"tainting_time,omitempty" mapstructure:"tainting_time,omitempty"`
+
+	// Targets corresponds to the JSON schema field "targets".
+	Targets []TargetTimes `json:"targets" yaml:"targets" mapstructure:"targets"`
+
+	// TotalBytes corresponds to the JSON schema field "total_bytes".
+	TotalBytes int `json:"total_bytes" yaml:"total_bytes" mapstructure:"total_bytes"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Profile) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["profiling_times"]; raw != nil && !ok {
+		return fmt.Errorf("field profiling_times in Profile: required")
+	}
+	if _, ok := raw["rules"]; raw != nil && !ok {
+		return fmt.Errorf("field rules in Profile: required")
+	}
+	if _, ok := raw["rules_parse_time"]; raw != nil && !ok {
+		return fmt.Errorf("field rules_parse_time in Profile: required")
+	}
+	if _, ok := raw["targets"]; raw != nil && !ok {
+		return fmt.Errorf("field targets in Profile: required")
+	}
+	if _, ok := raw["total_bytes"]; raw != nil && !ok {
+		return fmt.Errorf("field total_bytes in Profile: required")
+	}
+	type Plain Profile
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Profile(plain)
+	return nil
+}
 
 type ProjectMetadata struct {
+	// BaseBranchHeadCommit corresponds to the JSON schema field
+	// "base_branch_head_commit".
+	BaseBranchHeadCommit *Sha1 `json:"base_branch_head_commit,omitempty" yaml:"base_branch_head_commit,omitempty" mapstructure:"base_branch_head_commit,omitempty"`
+
 	// BaseSha corresponds to the JSON schema field "base_sha".
 	BaseSha *Sha1 `json:"base_sha,omitempty" yaml:"base_sha,omitempty" mapstructure:"base_sha,omitempty"`
 
@@ -2005,7 +3056,7 @@ type ProjectMetadata struct {
 	CommitAuthorUsername *string `json:"commit_author_username" yaml:"commit_author_username" mapstructure:"commit_author_username"`
 
 	// CommitTimestamp corresponds to the JSON schema field "commit_timestamp".
-	CommitTimestamp *string `json:"commit_timestamp,omitempty" yaml:"commit_timestamp,omitempty" mapstructure:"commit_timestamp,omitempty"`
+	CommitTimestamp *Datetime `json:"commit_timestamp,omitempty" yaml:"commit_timestamp,omitempty" mapstructure:"commit_timestamp,omitempty"`
 
 	// CommitTitle corresponds to the JSON schema field "commit_title".
 	CommitTitle *string `json:"commit_title" yaml:"commit_title" mapstructure:"commit_title"`
@@ -2028,6 +3079,9 @@ type ProjectMetadata struct {
 	// OrgId corresponds to the JSON schema field "org_id".
 	OrgId *string `json:"org_id,omitempty" yaml:"org_id,omitempty" mapstructure:"org_id,omitempty"`
 
+	// ProjectId corresponds to the JSON schema field "project_id".
+	ProjectId *string `json:"project_id,omitempty" yaml:"project_id,omitempty" mapstructure:"project_id,omitempty"`
+
 	// PullRequestAuthorImageUrl corresponds to the JSON schema field
 	// "pull_request_author_image_url".
 	PullRequestAuthorImageUrl Uri `json:"pull_request_author_image_url" yaml:"pull_request_author_image_url" mapstructure:"pull_request_author_image_url"`
@@ -2042,6 +3096,9 @@ type ProjectMetadata struct {
 	// PullRequestTitle corresponds to the JSON schema field "pull_request_title".
 	PullRequestTitle *string `json:"pull_request_title" yaml:"pull_request_title" mapstructure:"pull_request_title"`
 
+	// RepoDisplayName corresponds to the JSON schema field "repo_display_name".
+	RepoDisplayName *string `json:"repo_display_name,omitempty" yaml:"repo_display_name,omitempty" mapstructure:"repo_display_name,omitempty"`
+
 	// RepoId corresponds to the JSON schema field "repo_id".
 	RepoId *string `json:"repo_id,omitempty" yaml:"repo_id,omitempty" mapstructure:"repo_id,omitempty"`
 
@@ -2054,89 +3111,411 @@ type ProjectMetadata struct {
 	// ScanEnvironment corresponds to the JSON schema field "scan_environment".
 	ScanEnvironment string `json:"scan_environment" yaml:"scan_environment" mapstructure:"scan_environment"`
 
-	// SemgrepVersion corresponds to the JSON schema field "semgrep_version".
-	SemgrepVersion Version `json:"semgrep_version" yaml:"semgrep_version" mapstructure:"semgrep_version"`
-
 	// StartSha corresponds to the JSON schema field "start_sha".
 	StartSha *Sha1 `json:"start_sha,omitempty" yaml:"start_sha,omitempty" mapstructure:"start_sha,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ProjectMetadata) UnmarshalJSON(b []byte) error {
+func (j *ProjectMetadata) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["branch"]; !ok || v == nil {
+	if _, ok := raw["branch"]; raw != nil && !ok {
 		return fmt.Errorf("field branch in ProjectMetadata: required")
 	}
-	if v, ok := raw["ci_job_url"]; !ok || v == nil {
+	if _, ok := raw["ci_job_url"]; raw != nil && !ok {
 		return fmt.Errorf("field ci_job_url in ProjectMetadata: required")
 	}
-	if v, ok := raw["commit"]; !ok || v == nil {
+	if _, ok := raw["commit"]; raw != nil && !ok {
 		return fmt.Errorf("field commit in ProjectMetadata: required")
 	}
-	if v, ok := raw["commit_author_email"]; !ok || v == nil {
+	if _, ok := raw["commit_author_email"]; raw != nil && !ok {
 		return fmt.Errorf("field commit_author_email in ProjectMetadata: required")
 	}
-	if v, ok := raw["commit_author_image_url"]; !ok || v == nil {
+	if _, ok := raw["commit_author_image_url"]; raw != nil && !ok {
 		return fmt.Errorf("field commit_author_image_url in ProjectMetadata: required")
 	}
-	if v, ok := raw["commit_author_name"]; !ok || v == nil {
+	if _, ok := raw["commit_author_name"]; raw != nil && !ok {
 		return fmt.Errorf("field commit_author_name in ProjectMetadata: required")
 	}
-	if v, ok := raw["commit_author_username"]; !ok || v == nil {
+	if _, ok := raw["commit_author_username"]; raw != nil && !ok {
 		return fmt.Errorf("field commit_author_username in ProjectMetadata: required")
 	}
-	if v, ok := raw["commit_title"]; !ok || v == nil {
+	if _, ok := raw["commit_title"]; raw != nil && !ok {
 		return fmt.Errorf("field commit_title in ProjectMetadata: required")
 	}
-	if v, ok := raw["is_full_scan"]; !ok || v == nil {
+	if _, ok := raw["is_full_scan"]; raw != nil && !ok {
 		return fmt.Errorf("field is_full_scan in ProjectMetadata: required")
 	}
-	if v, ok := raw["on"]; !ok || v == nil {
+	if _, ok := raw["on"]; raw != nil && !ok {
 		return fmt.Errorf("field on in ProjectMetadata: required")
 	}
-	if v, ok := raw["pull_request_author_image_url"]; !ok || v == nil {
+	if _, ok := raw["pull_request_author_image_url"]; raw != nil && !ok {
 		return fmt.Errorf("field pull_request_author_image_url in ProjectMetadata: required")
 	}
-	if v, ok := raw["pull_request_author_username"]; !ok || v == nil {
+	if _, ok := raw["pull_request_author_username"]; raw != nil && !ok {
 		return fmt.Errorf("field pull_request_author_username in ProjectMetadata: required")
 	}
-	if v, ok := raw["pull_request_id"]; !ok || v == nil {
+	if _, ok := raw["pull_request_id"]; raw != nil && !ok {
 		return fmt.Errorf("field pull_request_id in ProjectMetadata: required")
 	}
-	if v, ok := raw["pull_request_title"]; !ok || v == nil {
+	if _, ok := raw["pull_request_title"]; raw != nil && !ok {
 		return fmt.Errorf("field pull_request_title in ProjectMetadata: required")
 	}
-	if v, ok := raw["repo_url"]; !ok || v == nil {
+	if _, ok := raw["repo_url"]; raw != nil && !ok {
 		return fmt.Errorf("field repo_url in ProjectMetadata: required")
 	}
-	if v, ok := raw["repository"]; !ok || v == nil {
+	if _, ok := raw["repository"]; raw != nil && !ok {
 		return fmt.Errorf("field repository in ProjectMetadata: required")
 	}
-	if v, ok := raw["scan_environment"]; !ok || v == nil {
+	if _, ok := raw["scan_environment"]; raw != nil && !ok {
 		return fmt.Errorf("field scan_environment in ProjectMetadata: required")
-	}
-	if v, ok := raw["semgrep_version"]; !ok || v == nil {
-		return fmt.Errorf("field semgrep_version in ProjectMetadata: required")
 	}
 	type Plain ProjectMetadata
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = ProjectMetadata(plain)
 	return nil
 }
 
+type ProjectRoot interface{}
+
 type RawJson interface{}
+
+type ResolutionCmdFailed struct {
+	// Command corresponds to the JSON schema field "command".
+	Command string `json:"command" yaml:"command" mapstructure:"command"`
+
+	// Message corresponds to the JSON schema field "message".
+	Message string `json:"message" yaml:"message" mapstructure:"message"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ResolutionCmdFailed) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["command"]; raw != nil && !ok {
+		return fmt.Errorf("field command in ResolutionCmdFailed: required")
+	}
+	if _, ok := raw["message"]; raw != nil && !ok {
+		return fmt.Errorf("field message in ResolutionCmdFailed: required")
+	}
+	type Plain ResolutionCmdFailed
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ResolutionCmdFailed(plain)
+	return nil
+}
+
+type ResolutionErrorKind interface{}
+
+type ResolutionMethod interface{}
+
+type ResolutionResult interface{}
+
+type ResolveDependenciesParams struct {
+	// AllowLocalBuilds corresponds to the JSON schema field "allow_local_builds".
+	AllowLocalBuilds bool `json:"allow_local_builds" yaml:"allow_local_builds" mapstructure:"allow_local_builds"`
+
+	// DependencySources corresponds to the JSON schema field "dependency_sources".
+	DependencySources []ResolveDependenciesParamsDependencySourcesElem `json:"dependency_sources" yaml:"dependency_sources" mapstructure:"dependency_sources"`
+
+	// DownloadDependencySourceCode corresponds to the JSON schema field
+	// "download_dependency_source_code".
+	DownloadDependencySourceCode bool `json:"download_dependency_source_code" yaml:"download_dependency_source_code" mapstructure:"download_dependency_source_code"`
+}
+
+type ResolveDependenciesParamsDependencySourcesElem interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ResolveDependenciesParams) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["allow_local_builds"]; raw != nil && !ok {
+		return fmt.Errorf("field allow_local_builds in ResolveDependenciesParams: required")
+	}
+	if _, ok := raw["dependency_sources"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_sources in ResolveDependenciesParams: required")
+	}
+	if _, ok := raw["download_dependency_source_code"]; raw != nil && !ok {
+		return fmt.Errorf("field download_dependency_source_code in ResolveDependenciesParams: required")
+	}
+	type Plain ResolveDependenciesParams
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ResolveDependenciesParams(plain)
+	return nil
+}
+
+type ResolvedDependency []interface{}
+
+type ResolvedSubproject struct {
+	// Ecosystem corresponds to the JSON schema field "ecosystem".
+	Ecosystem ResolvedSubprojectEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []ResolvedSubprojectErrorsElem `json:"errors" yaml:"errors" mapstructure:"errors"`
+
+	// Info corresponds to the JSON schema field "info".
+	Info Subproject `json:"info" yaml:"info" mapstructure:"info"`
+
+	// ResolutionMethod corresponds to the JSON schema field "resolution_method".
+	ResolutionMethod ResolvedSubprojectResolutionMethod `json:"resolution_method" yaml:"resolution_method" mapstructure:"resolution_method"`
+
+	// ResolvedDependencies corresponds to the JSON schema field
+	// "resolved_dependencies".
+	ResolvedDependencies [][]interface{} `json:"resolved_dependencies" yaml:"resolved_dependencies" mapstructure:"resolved_dependencies"`
+}
+
+type ResolvedSubprojectEcosystem interface{}
+
+type ResolvedSubprojectErrorsElem interface{}
+
+type ResolvedSubprojectResolutionMethod interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ResolvedSubproject) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["ecosystem"]; raw != nil && !ok {
+		return fmt.Errorf("field ecosystem in ResolvedSubproject: required")
+	}
+	if _, ok := raw["errors"]; raw != nil && !ok {
+		return fmt.Errorf("field errors in ResolvedSubproject: required")
+	}
+	if _, ok := raw["info"]; raw != nil && !ok {
+		return fmt.Errorf("field info in ResolvedSubproject: required")
+	}
+	if _, ok := raw["resolution_method"]; raw != nil && !ok {
+		return fmt.Errorf("field resolution_method in ResolvedSubproject: required")
+	}
+	if _, ok := raw["resolved_dependencies"]; raw != nil && !ok {
+		return fmt.Errorf("field resolved_dependencies in ResolvedSubproject: required")
+	}
+	type Plain ResolvedSubproject
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ResolvedSubproject(plain)
+	return nil
+}
+
+type RuleId string
+
+type RuleIdAndEngineKind []interface{}
+
+type RuleResult struct {
+	// Diagnosis corresponds to the JSON schema field "diagnosis".
+	Diagnosis *MatchingDiagnosis `json:"diagnosis,omitempty" yaml:"diagnosis,omitempty" mapstructure:"diagnosis,omitempty"`
+
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []Todo `json:"errors" yaml:"errors" mapstructure:"errors"`
+
+	// Matches corresponds to the JSON schema field "matches".
+	Matches map[string]ExpectedReported `json:"matches" yaml:"matches" mapstructure:"matches"`
+
+	// Passed corresponds to the JSON schema field "passed".
+	Passed bool `json:"passed" yaml:"passed" mapstructure:"passed"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *RuleResult) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["errors"]; raw != nil && !ok {
+		return fmt.Errorf("field errors in RuleResult: required")
+	}
+	if _, ok := raw["matches"]; raw != nil && !ok {
+		return fmt.Errorf("field matches in RuleResult: required")
+	}
+	if _, ok := raw["passed"]; raw != nil && !ok {
+		return fmt.Errorf("field passed in RuleResult: required")
+	}
+	type Plain RuleResult
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = RuleResult(plain)
+	return nil
+}
+
+type SarifFormat struct {
+	// IsPro corresponds to the JSON schema field "is_pro".
+	IsPro bool `json:"is_pro" yaml:"is_pro" mapstructure:"is_pro"`
+
+	// Rules corresponds to the JSON schema field "rules".
+	Rules Fpath `json:"rules" yaml:"rules" mapstructure:"rules"`
+
+	// ShowDataflowTraces corresponds to the JSON schema field "show_dataflow_traces".
+	ShowDataflowTraces bool `json:"show_dataflow_traces" yaml:"show_dataflow_traces" mapstructure:"show_dataflow_traces"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SarifFormat) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["is_pro"]; raw != nil && !ok {
+		return fmt.Errorf("field is_pro in SarifFormat: required")
+	}
+	if _, ok := raw["rules"]; raw != nil && !ok {
+		return fmt.Errorf("field rules in SarifFormat: required")
+	}
+	if _, ok := raw["show_dataflow_traces"]; raw != nil && !ok {
+		return fmt.Errorf("field show_dataflow_traces in SarifFormat: required")
+	}
+	type Plain SarifFormat
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SarifFormat(plain)
+	return nil
+}
+
+type ScaError interface{}
+
+type ScaMatch struct {
+	// DependencyMatch corresponds to the JSON schema field "dependency_match".
+	DependencyMatch DependencyMatch `json:"dependency_match" yaml:"dependency_match" mapstructure:"dependency_match"`
+
+	// Kind corresponds to the JSON schema field "kind".
+	Kind ScaMatchKind `json:"kind,omitempty" yaml:"kind,omitempty" mapstructure:"kind,omitempty"`
+
+	// ReachabilityRule corresponds to the JSON schema field "reachability_rule".
+	ReachabilityRule bool `json:"reachability_rule" yaml:"reachability_rule" mapstructure:"reachability_rule"`
+
+	// Reachable corresponds to the JSON schema field "reachable".
+	Reachable bool `json:"reachable" yaml:"reachable" mapstructure:"reachable"`
+
+	// ScaFindingSchema corresponds to the JSON schema field "sca_finding_schema".
+	ScaFindingSchema int `json:"sca_finding_schema" yaml:"sca_finding_schema" mapstructure:"sca_finding_schema"`
+}
+
+type ScaMatchKind interface{}
+
+type ScaMatchKind_1 interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScaMatch) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_match"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_match in ScaMatch: required")
+	}
+	if _, ok := raw["reachability_rule"]; raw != nil && !ok {
+		return fmt.Errorf("field reachability_rule in ScaMatch: required")
+	}
+	if _, ok := raw["reachable"]; raw != nil && !ok {
+		return fmt.Errorf("field reachable in ScaMatch: required")
+	}
+	if _, ok := raw["sca_finding_schema"]; raw != nil && !ok {
+		return fmt.Errorf("field sca_finding_schema in ScaMatch: required")
+	}
+	type Plain ScaMatch
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScaMatch(plain)
+	return nil
+}
 
 type ScaParserName interface{}
 
-type ScanConfigEnabledProductsElem interface{}
+type ScaPattern struct {
+	// Ecosystem corresponds to the JSON schema field "ecosystem".
+	Ecosystem ScaPatternEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+
+	// Package corresponds to the JSON schema field "package".
+	Package string `json:"package" yaml:"package" mapstructure:"package"`
+
+	// SemverRange corresponds to the JSON schema field "semver_range".
+	SemverRange string `json:"semver_range" yaml:"semver_range" mapstructure:"semver_range"`
+}
+
+type ScaPatternEcosystem interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScaPattern) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["ecosystem"]; raw != nil && !ok {
+		return fmt.Errorf("field ecosystem in ScaPattern: required")
+	}
+	if _, ok := raw["package"]; raw != nil && !ok {
+		return fmt.Errorf("field package in ScaPattern: required")
+	}
+	if _, ok := raw["semver_range"]; raw != nil && !ok {
+		return fmt.Errorf("field semver_range in ScaPattern: required")
+	}
+	type Plain ScaPattern
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScaPattern(plain)
+	return nil
+}
+
+type ScaResolutionError struct {
+	// DependencySourceFile corresponds to the JSON schema field
+	// "dependency_source_file".
+	DependencySourceFile Fpath `json:"dependency_source_file" yaml:"dependency_source_file" mapstructure:"dependency_source_file"`
+
+	// Type corresponds to the JSON schema field "type_".
+	Type ScaResolutionErrorType `json:"type_" yaml:"type_" mapstructure:"type_"`
+}
+
+type ScaResolutionErrorType interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScaResolutionError) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_source_file"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_source_file in ScaResolutionError: required")
+	}
+	if _, ok := raw["type_"]; raw != nil && !ok {
+		return fmt.Errorf("field type_ in ScaResolutionError: required")
+	}
+	type Plain ScaResolutionError
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScaResolutionError(plain)
+	return nil
+}
 
 type ScanConfig struct {
+	// Actions corresponds to the JSON schema field "actions".
+	Actions []ScanConfigActionsElem `json:"actions,omitempty" yaml:"actions,omitempty" mapstructure:"actions,omitempty"`
+
 	// Autofix corresponds to the JSON schema field "autofix".
 	Autofix *bool `json:"autofix,omitempty" yaml:"autofix,omitempty" mapstructure:"autofix,omitempty"`
 
@@ -2161,11 +3540,25 @@ type ScanConfig struct {
 	// IgnoredFiles corresponds to the JSON schema field "ignored_files".
 	IgnoredFiles []string `json:"ignored_files,omitempty" yaml:"ignored_files,omitempty" mapstructure:"ignored_files,omitempty"`
 
+	// PathToTransitivity corresponds to the JSON schema field "path_to_transitivity".
+	PathToTransitivity *bool `json:"path_to_transitivity,omitempty" yaml:"path_to_transitivity,omitempty" mapstructure:"path_to_transitivity,omitempty"`
+
 	// PolicyNames corresponds to the JSON schema field "policy_names".
 	PolicyNames []string `json:"policy_names" yaml:"policy_names" mapstructure:"policy_names"`
 
 	// RuleConfig corresponds to the JSON schema field "rule_config".
 	RuleConfig string `json:"rule_config" yaml:"rule_config" mapstructure:"rule_config"`
+
+	// ScanAllDepsInDiffScan corresponds to the JSON schema field
+	// "scan_all_deps_in_diff_scan".
+	ScanAllDepsInDiffScan *bool `json:"scan_all_deps_in_diff_scan,omitempty" yaml:"scan_all_deps_in_diff_scan,omitempty" mapstructure:"scan_all_deps_in_diff_scan,omitempty"`
+
+	// SymbolAnalysis corresponds to the JSON schema field "symbol_analysis".
+	SymbolAnalysis *bool `json:"symbol_analysis,omitempty" yaml:"symbol_analysis,omitempty" mapstructure:"symbol_analysis,omitempty"`
+
+	// TransitiveReachabilityEnabled corresponds to the JSON schema field
+	// "transitive_reachability_enabled".
+	TransitiveReachabilityEnabled *bool `json:"transitive_reachability_enabled,omitempty" yaml:"transitive_reachability_enabled,omitempty" mapstructure:"transitive_reachability_enabled,omitempty"`
 
 	// TriageIgnoredMatchBasedIds corresponds to the JSON schema field
 	// "triage_ignored_match_based_ids".
@@ -2176,113 +3569,327 @@ type ScanConfig struct {
 	TriageIgnoredSyntacticIds []string `json:"triage_ignored_syntactic_ids,omitempty" yaml:"triage_ignored_syntactic_ids,omitempty" mapstructure:"triage_ignored_syntactic_ids,omitempty"`
 }
 
+type ScanConfigActionsElem interface{}
+
+type ScanConfigEnabledProductsElem interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ScanConfig) UnmarshalJSON(b []byte) error {
+func (j *ScanConfig) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["deployment_id"]; !ok || v == nil {
+	if _, ok := raw["deployment_id"]; raw != nil && !ok {
 		return fmt.Errorf("field deployment_id in ScanConfig: required")
 	}
-	if v, ok := raw["deployment_name"]; !ok || v == nil {
+	if _, ok := raw["deployment_name"]; raw != nil && !ok {
 		return fmt.Errorf("field deployment_name in ScanConfig: required")
 	}
-	if v, ok := raw["policy_names"]; !ok || v == nil {
+	if _, ok := raw["policy_names"]; raw != nil && !ok {
 		return fmt.Errorf("field policy_names in ScanConfig: required")
 	}
-	if v, ok := raw["rule_config"]; !ok || v == nil {
+	if _, ok := raw["rule_config"]; raw != nil && !ok {
 		return fmt.Errorf("field rule_config in ScanConfig: required")
 	}
 	type Plain ScanConfig
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = ScanConfig(plain)
 	return nil
 }
 
-type ScanMetadataRequestedProductsElem interface{}
+type ScanConfiguration struct {
+	// FipsMode corresponds to the JSON schema field "fips_mode".
+	FipsMode *bool `json:"fips_mode,omitempty" yaml:"fips_mode,omitempty" mapstructure:"fips_mode,omitempty"`
 
-type Uuid string
+	// ProjectMergeBase corresponds to the JSON schema field "project_merge_base".
+	ProjectMergeBase *Sha1 `json:"project_merge_base,omitempty" yaml:"project_merge_base,omitempty" mapstructure:"project_merge_base,omitempty"`
+
+	// Rules corresponds to the JSON schema field "rules".
+	Rules ScanConfigurationRules `json:"rules" yaml:"rules" mapstructure:"rules"`
+
+	// TriageIgnoredMatchBasedIds corresponds to the JSON schema field
+	// "triage_ignored_match_based_ids".
+	TriageIgnoredMatchBasedIds []string `json:"triage_ignored_match_based_ids,omitempty" yaml:"triage_ignored_match_based_ids,omitempty" mapstructure:"triage_ignored_match_based_ids,omitempty"`
+
+	// TriageIgnoredSyntacticIds corresponds to the JSON schema field
+	// "triage_ignored_syntactic_ids".
+	TriageIgnoredSyntacticIds []string `json:"triage_ignored_syntactic_ids,omitempty" yaml:"triage_ignored_syntactic_ids,omitempty" mapstructure:"triage_ignored_syntactic_ids,omitempty"`
+}
+
+type ScanConfigurationRules interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScanConfiguration) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["rules"]; raw != nil && !ok {
+		return fmt.Errorf("field rules in ScanConfiguration: required")
+	}
+	type Plain ScanConfiguration
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScanConfiguration(plain)
+	return nil
+}
+
+type ScanInfo struct {
+	// DeploymentId corresponds to the JSON schema field "deployment_id".
+	DeploymentId int `json:"deployment_id" yaml:"deployment_id" mapstructure:"deployment_id"`
+
+	// DeploymentName corresponds to the JSON schema field "deployment_name".
+	DeploymentName string `json:"deployment_name" yaml:"deployment_name" mapstructure:"deployment_name"`
+
+	// EnabledProducts corresponds to the JSON schema field "enabled_products".
+	EnabledProducts []ScanInfoEnabledProductsElem `json:"enabled_products" yaml:"enabled_products" mapstructure:"enabled_products"`
+
+	// Id corresponds to the JSON schema field "id".
+	Id *int `json:"id,omitempty" yaml:"id,omitempty" mapstructure:"id,omitempty"`
+}
+
+type ScanInfoEnabledProductsElem interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScanInfo) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["deployment_id"]; raw != nil && !ok {
+		return fmt.Errorf("field deployment_id in ScanInfo: required")
+	}
+	if _, ok := raw["deployment_name"]; raw != nil && !ok {
+		return fmt.Errorf("field deployment_name in ScanInfo: required")
+	}
+	if _, ok := raw["enabled_products"]; raw != nil && !ok {
+		return fmt.Errorf("field enabled_products in ScanInfo: required")
+	}
+	type Plain ScanInfo
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScanInfo(plain)
+	return nil
+}
 
 type ScanMetadata struct {
 	// CliVersion corresponds to the JSON schema field "cli_version".
 	CliVersion Version `json:"cli_version" yaml:"cli_version" mapstructure:"cli_version"`
 
+	// DryRun corresponds to the JSON schema field "dry_run".
+	DryRun *bool `json:"dry_run,omitempty" yaml:"dry_run,omitempty" mapstructure:"dry_run,omitempty"`
+
+	// Ecosystems corresponds to the JSON schema field "ecosystems".
+	Ecosystems []string `json:"ecosystems,omitempty" yaml:"ecosystems,omitempty" mapstructure:"ecosystems,omitempty"`
+
+	// Packages corresponds to the JSON schema field "packages".
+	Packages []string `json:"packages,omitempty" yaml:"packages,omitempty" mapstructure:"packages,omitempty"`
+
 	// RequestedProducts corresponds to the JSON schema field "requested_products".
 	RequestedProducts []ScanMetadataRequestedProductsElem `json:"requested_products" yaml:"requested_products" mapstructure:"requested_products"`
+
+	// SmsScanId corresponds to the JSON schema field "sms_scan_id".
+	SmsScanId *string `json:"sms_scan_id,omitempty" yaml:"sms_scan_id,omitempty" mapstructure:"sms_scan_id,omitempty"`
 
 	// UniqueId corresponds to the JSON schema field "unique_id".
 	UniqueId Uuid `json:"unique_id" yaml:"unique_id" mapstructure:"unique_id"`
 }
 
+type ScanMetadataRequestedProductsElem interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ScanMetadata) UnmarshalJSON(b []byte) error {
+func (j *ScanMetadata) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["cli_version"]; !ok || v == nil {
+	if _, ok := raw["cli_version"]; raw != nil && !ok {
 		return fmt.Errorf("field cli_version in ScanMetadata: required")
 	}
-	if v, ok := raw["requested_products"]; !ok || v == nil {
+	if _, ok := raw["requested_products"]; raw != nil && !ok {
 		return fmt.Errorf("field requested_products in ScanMetadata: required")
 	}
-	if v, ok := raw["unique_id"]; !ok || v == nil {
+	if _, ok := raw["unique_id"]; raw != nil && !ok {
 		return fmt.Errorf("field unique_id in ScanMetadata: required")
 	}
 	type Plain ScanMetadata
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = ScanMetadata(plain)
 	return nil
 }
 
-type ScanRequestMeta interface{}
-
 type ScanRequest struct {
-	// Meta corresponds to the JSON schema field "meta".
-	Meta ScanRequestMeta `json:"meta" yaml:"meta" mapstructure:"meta"`
-
 	// ProjectConfig corresponds to the JSON schema field "project_config".
 	ProjectConfig *CiConfigFromRepo `json:"project_config,omitempty" yaml:"project_config,omitempty" mapstructure:"project_config,omitempty"`
 
 	// ProjectMetadata corresponds to the JSON schema field "project_metadata".
-	ProjectMetadata *ProjectMetadata `json:"project_metadata,omitempty" yaml:"project_metadata,omitempty" mapstructure:"project_metadata,omitempty"`
+	ProjectMetadata ProjectMetadata `json:"project_metadata" yaml:"project_metadata" mapstructure:"project_metadata"`
 
 	// ScanMetadata corresponds to the JSON schema field "scan_metadata".
-	ScanMetadata *ScanMetadata `json:"scan_metadata,omitempty" yaml:"scan_metadata,omitempty" mapstructure:"scan_metadata,omitempty"`
+	ScanMetadata ScanMetadata `json:"scan_metadata" yaml:"scan_metadata" mapstructure:"scan_metadata"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ScanRequest) UnmarshalJSON(b []byte) error {
+func (j *ScanRequest) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["meta"]; !ok || v == nil {
-		return fmt.Errorf("field meta in ScanRequest: required")
+	if _, ok := raw["project_metadata"]; raw != nil && !ok {
+		return fmt.Errorf("field project_metadata in ScanRequest: required")
+	}
+	if _, ok := raw["scan_metadata"]; raw != nil && !ok {
+		return fmt.Errorf("field scan_metadata in ScanRequest: required")
 	}
 	type Plain ScanRequest
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = ScanRequest(plain)
 	return nil
 }
 
-type SkipReason interface{}
+type ScanResponse struct {
+	// Config corresponds to the JSON schema field "config".
+	Config ScanConfiguration `json:"config" yaml:"config" mapstructure:"config"`
 
-type Transitivity interface{}
+	// EngineParams corresponds to the JSON schema field "engine_params".
+	EngineParams EngineConfiguration `json:"engine_params" yaml:"engine_params" mapstructure:"engine_params"`
 
-type ValidationState interface{}
+	// Info corresponds to the JSON schema field "info".
+	Info ScanInfo `json:"info" yaml:"info" mapstructure:"info"`
+}
 
-type SemgrepOutputV1JsonschemaEngineRequested interface{}
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScanResponse) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["config"]; raw != nil && !ok {
+		return fmt.Errorf("field config in ScanResponse: required")
+	}
+	if _, ok := raw["engine_params"]; raw != nil && !ok {
+		return fmt.Errorf("field engine_params in ScanResponse: required")
+	}
+	if _, ok := raw["info"]; raw != nil && !ok {
+		return fmt.Errorf("field info in ScanResponse: required")
+	}
+	type Plain ScanResponse
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScanResponse(plain)
+	return nil
+}
+
+type ScannedAndSkipped struct {
+	// Scanned corresponds to the JSON schema field "scanned".
+	Scanned []Fpath `json:"scanned" yaml:"scanned" mapstructure:"scanned"`
+
+	// Skipped corresponds to the JSON schema field "skipped".
+	Skipped []SkippedTarget `json:"skipped,omitempty" yaml:"skipped,omitempty" mapstructure:"skipped,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScannedAndSkipped) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["scanned"]; raw != nil && !ok {
+		return fmt.Errorf("field scanned in ScannedAndSkipped: required")
+	}
+	type Plain ScannedAndSkipped
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScannedAndSkipped(plain)
+	return nil
+}
+
+type ScanningRoots struct {
+	// RootPaths corresponds to the JSON schema field "root_paths".
+	RootPaths []Fpath `json:"root_paths" yaml:"root_paths" mapstructure:"root_paths"`
+
+	// TargetingConf corresponds to the JSON schema field "targeting_conf".
+	TargetingConf TargetingConf `json:"targeting_conf" yaml:"targeting_conf" mapstructure:"targeting_conf"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScanningRoots) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["root_paths"]; raw != nil && !ok {
+		return fmt.Errorf("field root_paths in ScanningRoots: required")
+	}
+	if _, ok := raw["targeting_conf"]; raw != nil && !ok {
+		return fmt.Errorf("field targeting_conf in ScanningRoots: required")
+	}
+	type Plain ScanningRoots
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScanningRoots(plain)
+	return nil
+}
+
+type ScanningTime struct {
+	// PerFileTime corresponds to the JSON schema field "per_file_time".
+	PerFileTime SummaryStats `json:"per_file_time" yaml:"per_file_time" mapstructure:"per_file_time"`
+
+	// TotalTime corresponds to the JSON schema field "total_time".
+	TotalTime float64 `json:"total_time" yaml:"total_time" mapstructure:"total_time"`
+
+	// VerySlowFiles corresponds to the JSON schema field "very_slow_files".
+	VerySlowFiles []FileTime `json:"very_slow_files" yaml:"very_slow_files" mapstructure:"very_slow_files"`
+
+	// VerySlowStats corresponds to the JSON schema field "very_slow_stats".
+	VerySlowStats VerySlowStats `json:"very_slow_stats" yaml:"very_slow_stats" mapstructure:"very_slow_stats"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ScanningTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["per_file_time"]; raw != nil && !ok {
+		return fmt.Errorf("field per_file_time in ScanningTime: required")
+	}
+	if _, ok := raw["total_time"]; raw != nil && !ok {
+		return fmt.Errorf("field total_time in ScanningTime: required")
+	}
+	if _, ok := raw["very_slow_files"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_files in ScanningTime: required")
+	}
+	if _, ok := raw["very_slow_stats"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_stats in ScanningTime: required")
+	}
+	type Plain ScanningTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = ScanningTime(plain)
+	return nil
+}
 
 // Translated by atdcat from 'semgrep_output_v1.atd'.
 type SemgrepOutputV1Jsonschema struct {
@@ -2294,6 +3901,13 @@ type SemgrepOutputV1Jsonschema struct {
 
 	// Explanations corresponds to the JSON schema field "explanations".
 	Explanations []MatchingExplanation `json:"explanations,omitempty" yaml:"explanations,omitempty" mapstructure:"explanations,omitempty"`
+
+	// InterfileLanguagesUsed corresponds to the JSON schema field
+	// "interfile_languages_used".
+	InterfileLanguagesUsed []string `json:"interfile_languages_used,omitempty" yaml:"interfile_languages_used,omitempty" mapstructure:"interfile_languages_used,omitempty"`
+
+	// McpScanResults corresponds to the JSON schema field "mcp_scan_results".
+	McpScanResults *McpScanResults `json:"mcp_scan_results,omitempty" yaml:"mcp_scan_results,omitempty" mapstructure:"mcp_scan_results,omitempty"`
 
 	// Paths corresponds to the JSON schema field "paths".
 	Paths ScannedAndSkipped `json:"paths" yaml:"paths" mapstructure:"paths"`
@@ -2307,6 +3921,9 @@ type SemgrepOutputV1Jsonschema struct {
 	// SkippedRules corresponds to the JSON schema field "skipped_rules".
 	SkippedRules []SkippedRule `json:"skipped_rules,omitempty" yaml:"skipped_rules,omitempty" mapstructure:"skipped_rules,omitempty"`
 
+	// Subprojects corresponds to the JSON schema field "subprojects".
+	Subprojects []CliOutputSubprojectInfo `json:"subprojects,omitempty" yaml:"subprojects,omitempty" mapstructure:"subprojects,omitempty"`
+
 	// Time corresponds to the JSON schema field "time".
 	Time *Profile `json:"time,omitempty" yaml:"time,omitempty" mapstructure:"time,omitempty"`
 
@@ -2314,26 +3931,1088 @@ type SemgrepOutputV1Jsonschema struct {
 	Version *Version `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version,omitempty"`
 }
 
+type SemgrepOutputV1JsonschemaEngineRequested interface{}
+
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *SemgrepOutputV1Jsonschema) UnmarshalJSON(b []byte) error {
+func (j *SemgrepOutputV1Jsonschema) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["errors"]; !ok || v == nil {
+	if _, ok := raw["errors"]; raw != nil && !ok {
 		return fmt.Errorf("field errors in SemgrepOutputV1Jsonschema: required")
 	}
-	if v, ok := raw["paths"]; !ok || v == nil {
+	if _, ok := raw["paths"]; raw != nil && !ok {
 		return fmt.Errorf("field paths in SemgrepOutputV1Jsonschema: required")
 	}
-	if v, ok := raw["results"]; !ok || v == nil {
+	if _, ok := raw["results"]; raw != nil && !ok {
 		return fmt.Errorf("field results in SemgrepOutputV1Jsonschema: required")
 	}
 	type Plain SemgrepOutputV1Jsonschema
 	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
+	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
 	}
 	*j = SemgrepOutputV1Jsonschema(plain)
+	return nil
+}
+
+type Sha1 string
+
+type SkipReason interface{}
+
+type SkippedRule struct {
+	// Details corresponds to the JSON schema field "details".
+	Details string `json:"details" yaml:"details" mapstructure:"details"`
+
+	// Position corresponds to the JSON schema field "position".
+	Position Position `json:"position" yaml:"position" mapstructure:"position"`
+
+	// RuleId corresponds to the JSON schema field "rule_id".
+	RuleId RuleId `json:"rule_id" yaml:"rule_id" mapstructure:"rule_id"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SkippedRule) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["details"]; raw != nil && !ok {
+		return fmt.Errorf("field details in SkippedRule: required")
+	}
+	if _, ok := raw["position"]; raw != nil && !ok {
+		return fmt.Errorf("field position in SkippedRule: required")
+	}
+	if _, ok := raw["rule_id"]; raw != nil && !ok {
+		return fmt.Errorf("field rule_id in SkippedRule: required")
+	}
+	type Plain SkippedRule
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SkippedRule(plain)
+	return nil
+}
+
+type SkippedTarget struct {
+	// Details corresponds to the JSON schema field "details".
+	Details *string `json:"details,omitempty" yaml:"details,omitempty" mapstructure:"details,omitempty"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+
+	// Reason corresponds to the JSON schema field "reason".
+	Reason SkippedTargetReason `json:"reason" yaml:"reason" mapstructure:"reason"`
+
+	// RuleId corresponds to the JSON schema field "rule_id".
+	RuleId *RuleId `json:"rule_id,omitempty" yaml:"rule_id,omitempty" mapstructure:"rule_id,omitempty"`
+}
+
+type SkippedTargetReason interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SkippedTarget) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in SkippedTarget: required")
+	}
+	if _, ok := raw["reason"]; raw != nil && !ok {
+		return fmt.Errorf("field reason in SkippedTarget: required")
+	}
+	type Plain SkippedTarget
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SkippedTarget(plain)
+	return nil
+}
+
+type Snippet struct {
+	// Line corresponds to the JSON schema field "line".
+	Line int `json:"line" yaml:"line" mapstructure:"line"`
+
+	// Text corresponds to the JSON schema field "text".
+	Text string `json:"text" yaml:"text" mapstructure:"text"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Snippet) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["line"]; raw != nil && !ok {
+		return fmt.Errorf("field line in Snippet: required")
+	}
+	if _, ok := raw["text"]; raw != nil && !ok {
+		return fmt.Errorf("field text in Snippet: required")
+	}
+	type Plain Snippet
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Snippet(plain)
+	return nil
+}
+
+type Subproject struct {
+	// DependencySource corresponds to the JSON schema field "dependency_source".
+	DependencySource SubprojectDependencySource `json:"dependency_source" yaml:"dependency_source" mapstructure:"dependency_source"`
+
+	// Ecosystem corresponds to the JSON schema field "ecosystem".
+	Ecosystem interface{} `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+
+	// RootDir corresponds to the JSON schema field "root_dir".
+	RootDir Fpath `json:"root_dir" yaml:"root_dir" mapstructure:"root_dir"`
+}
+
+type SubprojectDependencySource interface{}
+
+type SubprojectStats struct {
+	// DependencySources corresponds to the JSON schema field "dependency_sources".
+	DependencySources []DependencySourceFile `json:"dependency_sources" yaml:"dependency_sources" mapstructure:"dependency_sources"`
+
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []SubprojectStatsErrorsElem `json:"errors,omitempty" yaml:"errors,omitempty" mapstructure:"errors,omitempty"`
+
+	// ResolvedStats corresponds to the JSON schema field "resolved_stats".
+	ResolvedStats *DependencyResolutionStats `json:"resolved_stats,omitempty" yaml:"resolved_stats,omitempty" mapstructure:"resolved_stats,omitempty"`
+
+	// SubprojectId corresponds to the JSON schema field "subproject_id".
+	SubprojectId string `json:"subproject_id" yaml:"subproject_id" mapstructure:"subproject_id"`
+
+	// UnresolvedReason corresponds to the JSON schema field "unresolved_reason".
+	UnresolvedReason SubprojectStatsUnresolvedReason `json:"unresolved_reason,omitempty" yaml:"unresolved_reason,omitempty" mapstructure:"unresolved_reason,omitempty"`
+}
+
+type SubprojectStatsErrorsElem interface{}
+
+type SubprojectStatsUnresolvedReason interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SubprojectStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_sources"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_sources in SubprojectStats: required")
+	}
+	if _, ok := raw["subproject_id"]; raw != nil && !ok {
+		return fmt.Errorf("field subproject_id in SubprojectStats: required")
+	}
+	type Plain SubprojectStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SubprojectStats(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Subproject) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependency_source"]; raw != nil && !ok {
+		return fmt.Errorf("field dependency_source in Subproject: required")
+	}
+	if _, ok := raw["ecosystem"]; raw != nil && !ok {
+		return fmt.Errorf("field ecosystem in Subproject: required")
+	}
+	if _, ok := raw["root_dir"]; raw != nil && !ok {
+		return fmt.Errorf("field root_dir in Subproject: required")
+	}
+	type Plain Subproject
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Subproject(plain)
+	return nil
+}
+
+type SummaryStats struct {
+	// Mean corresponds to the JSON schema field "mean".
+	Mean float64 `json:"mean" yaml:"mean" mapstructure:"mean"`
+
+	// StdDev corresponds to the JSON schema field "std_dev".
+	StdDev float64 `json:"std_dev" yaml:"std_dev" mapstructure:"std_dev"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SummaryStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["mean"]; raw != nil && !ok {
+		return fmt.Errorf("field mean in SummaryStats: required")
+	}
+	if _, ok := raw["std_dev"]; raw != nil && !ok {
+		return fmt.Errorf("field std_dev in SummaryStats: required")
+	}
+	type Plain SummaryStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SummaryStats(plain)
+	return nil
+}
+
+type SupplyChainStats struct {
+	// SubprojectsStats corresponds to the JSON schema field "subprojects_stats".
+	SubprojectsStats []SubprojectStats `json:"subprojects_stats" yaml:"subprojects_stats" mapstructure:"subprojects_stats"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SupplyChainStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["subprojects_stats"]; raw != nil && !ok {
+		return fmt.Errorf("field subprojects_stats in SupplyChainStats: required")
+	}
+	type Plain SupplyChainStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SupplyChainStats(plain)
+	return nil
+}
+
+type SvalueValue struct {
+	// SvalueAbstractContent corresponds to the JSON schema field
+	// "svalue_abstract_content".
+	SvalueAbstractContent string `json:"svalue_abstract_content" yaml:"svalue_abstract_content" mapstructure:"svalue_abstract_content"`
+
+	// SvalueEnd corresponds to the JSON schema field "svalue_end".
+	SvalueEnd *Position `json:"svalue_end,omitempty" yaml:"svalue_end,omitempty" mapstructure:"svalue_end,omitempty"`
+
+	// SvalueStart corresponds to the JSON schema field "svalue_start".
+	SvalueStart *Position `json:"svalue_start,omitempty" yaml:"svalue_start,omitempty" mapstructure:"svalue_start,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SvalueValue) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["svalue_abstract_content"]; raw != nil && !ok {
+		return fmt.Errorf("field svalue_abstract_content in SvalueValue: required")
+	}
+	type Plain SvalueValue
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SvalueValue(plain)
+	return nil
+}
+
+type Symbol struct {
+	// Fqn corresponds to the JSON schema field "fqn".
+	Fqn []string `json:"fqn" yaml:"fqn" mapstructure:"fqn"`
+}
+
+type SymbolAnalysis []SymbolUsage
+
+type SymbolAnalysisUploadResponse struct {
+	// UploadUrl corresponds to the JSON schema field "upload_url".
+	UploadUrl Uri `json:"upload_url" yaml:"upload_url" mapstructure:"upload_url"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SymbolAnalysisUploadResponse) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["upload_url"]; raw != nil && !ok {
+		return fmt.Errorf("field upload_url in SymbolAnalysisUploadResponse: required")
+	}
+	type Plain SymbolAnalysisUploadResponse
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SymbolAnalysisUploadResponse(plain)
+	return nil
+}
+
+type SymbolUsage struct {
+	// Locs corresponds to the JSON schema field "locs".
+	Locs []Location `json:"locs" yaml:"locs" mapstructure:"locs"`
+
+	// Symbol corresponds to the JSON schema field "symbol".
+	Symbol Symbol `json:"symbol" yaml:"symbol" mapstructure:"symbol"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *SymbolUsage) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["locs"]; raw != nil && !ok {
+		return fmt.Errorf("field locs in SymbolUsage: required")
+	}
+	if _, ok := raw["symbol"]; raw != nil && !ok {
+		return fmt.Errorf("field symbol in SymbolUsage: required")
+	}
+	type Plain SymbolUsage
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = SymbolUsage(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Symbol) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["fqn"]; raw != nil && !ok {
+		return fmt.Errorf("field fqn in Symbol: required")
+	}
+	type Plain Symbol
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Symbol(plain)
+	return nil
+}
+
+type Tag string
+
+type TaintingTime struct {
+	// PerDefAndRuleTime corresponds to the JSON schema field "per_def_and_rule_time".
+	PerDefAndRuleTime SummaryStats `json:"per_def_and_rule_time" yaml:"per_def_and_rule_time" mapstructure:"per_def_and_rule_time"`
+
+	// TotalTime corresponds to the JSON schema field "total_time".
+	TotalTime float64 `json:"total_time" yaml:"total_time" mapstructure:"total_time"`
+
+	// VerySlowRulesOnDefs corresponds to the JSON schema field
+	// "very_slow_rules_on_defs".
+	VerySlowRulesOnDefs []DefRuleTime `json:"very_slow_rules_on_defs" yaml:"very_slow_rules_on_defs" mapstructure:"very_slow_rules_on_defs"`
+
+	// VerySlowStats corresponds to the JSON schema field "very_slow_stats".
+	VerySlowStats VerySlowStats `json:"very_slow_stats" yaml:"very_slow_stats" mapstructure:"very_slow_stats"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TaintingTime) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["per_def_and_rule_time"]; raw != nil && !ok {
+		return fmt.Errorf("field per_def_and_rule_time in TaintingTime: required")
+	}
+	if _, ok := raw["total_time"]; raw != nil && !ok {
+		return fmt.Errorf("field total_time in TaintingTime: required")
+	}
+	if _, ok := raw["very_slow_rules_on_defs"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_rules_on_defs in TaintingTime: required")
+	}
+	if _, ok := raw["very_slow_stats"]; raw != nil && !ok {
+		return fmt.Errorf("field very_slow_stats in TaintingTime: required")
+	}
+	type Plain TaintingTime
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TaintingTime(plain)
+	return nil
+}
+
+type Target interface{}
+
+type TargetDiscoveryResult struct {
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []CoreError `json:"errors" yaml:"errors" mapstructure:"errors"`
+
+	// Skipped corresponds to the JSON schema field "skipped".
+	Skipped []SkippedTarget `json:"skipped" yaml:"skipped" mapstructure:"skipped"`
+
+	// TargetPaths corresponds to the JSON schema field "target_paths".
+	TargetPaths []Fppath `json:"target_paths" yaml:"target_paths" mapstructure:"target_paths"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TargetDiscoveryResult) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["errors"]; raw != nil && !ok {
+		return fmt.Errorf("field errors in TargetDiscoveryResult: required")
+	}
+	if _, ok := raw["skipped"]; raw != nil && !ok {
+		return fmt.Errorf("field skipped in TargetDiscoveryResult: required")
+	}
+	if _, ok := raw["target_paths"]; raw != nil && !ok {
+		return fmt.Errorf("field target_paths in TargetDiscoveryResult: required")
+	}
+	type Plain TargetDiscoveryResult
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TargetDiscoveryResult(plain)
+	return nil
+}
+
+type TargetTimes struct {
+	// MatchTimes corresponds to the JSON schema field "match_times".
+	MatchTimes []float64 `json:"match_times" yaml:"match_times" mapstructure:"match_times"`
+
+	// NumBytes corresponds to the JSON schema field "num_bytes".
+	NumBytes int `json:"num_bytes" yaml:"num_bytes" mapstructure:"num_bytes"`
+
+	// ParseTimes corresponds to the JSON schema field "parse_times".
+	ParseTimes []float64 `json:"parse_times" yaml:"parse_times" mapstructure:"parse_times"`
+
+	// Path corresponds to the JSON schema field "path".
+	Path Fpath `json:"path" yaml:"path" mapstructure:"path"`
+
+	// RunTime corresponds to the JSON schema field "run_time".
+	RunTime float64 `json:"run_time" yaml:"run_time" mapstructure:"run_time"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TargetTimes) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["match_times"]; raw != nil && !ok {
+		return fmt.Errorf("field match_times in TargetTimes: required")
+	}
+	if _, ok := raw["num_bytes"]; raw != nil && !ok {
+		return fmt.Errorf("field num_bytes in TargetTimes: required")
+	}
+	if _, ok := raw["parse_times"]; raw != nil && !ok {
+		return fmt.Errorf("field parse_times in TargetTimes: required")
+	}
+	if _, ok := raw["path"]; raw != nil && !ok {
+		return fmt.Errorf("field path in TargetTimes: required")
+	}
+	if _, ok := raw["run_time"]; raw != nil && !ok {
+		return fmt.Errorf("field run_time in TargetTimes: required")
+	}
+	type Plain TargetTimes
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TargetTimes(plain)
+	return nil
+}
+
+type TargetingConf struct {
+	// AlwaysSelectExplicitTargets corresponds to the JSON schema field
+	// "always_select_explicit_targets".
+	AlwaysSelectExplicitTargets bool `json:"always_select_explicit_targets" yaml:"always_select_explicit_targets" mapstructure:"always_select_explicit_targets"`
+
+	// BaselineCommit corresponds to the JSON schema field "baseline_commit".
+	BaselineCommit *string `json:"baseline_commit,omitempty" yaml:"baseline_commit,omitempty" mapstructure:"baseline_commit,omitempty"`
+
+	// Exclude corresponds to the JSON schema field "exclude".
+	Exclude []string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+
+	// ExcludeMinifiedFiles corresponds to the JSON schema field
+	// "exclude_minified_files".
+	ExcludeMinifiedFiles bool `json:"exclude_minified_files" yaml:"exclude_minified_files" mapstructure:"exclude_minified_files"`
+
+	// ExplicitTargets corresponds to the JSON schema field "explicit_targets".
+	ExplicitTargets []string `json:"explicit_targets" yaml:"explicit_targets" mapstructure:"explicit_targets"`
+
+	// ForceNovcsProject corresponds to the JSON schema field "force_novcs_project".
+	ForceNovcsProject bool `json:"force_novcs_project" yaml:"force_novcs_project" mapstructure:"force_novcs_project"`
+
+	// ForceProjectRoot corresponds to the JSON schema field "force_project_root".
+	ForceProjectRoot TargetingConfForceProjectRoot `json:"force_project_root,omitempty" yaml:"force_project_root,omitempty" mapstructure:"force_project_root,omitempty"`
+
+	// Include corresponds to the JSON schema field "include_".
+	Include []string `json:"include_,omitempty" yaml:"include_,omitempty" mapstructure:"include_,omitempty"`
+
+	// MaxTargetBytes corresponds to the JSON schema field "max_target_bytes".
+	MaxTargetBytes int `json:"max_target_bytes" yaml:"max_target_bytes" mapstructure:"max_target_bytes"`
+
+	// RespectGitignore corresponds to the JSON schema field "respect_gitignore".
+	RespectGitignore bool `json:"respect_gitignore" yaml:"respect_gitignore" mapstructure:"respect_gitignore"`
+
+	// RespectSemgrepignoreFiles corresponds to the JSON schema field
+	// "respect_semgrepignore_files".
+	RespectSemgrepignoreFiles bool `json:"respect_semgrepignore_files" yaml:"respect_semgrepignore_files" mapstructure:"respect_semgrepignore_files"`
+
+	// SemgrepignoreFilename corresponds to the JSON schema field
+	// "semgrepignore_filename".
+	SemgrepignoreFilename *string `json:"semgrepignore_filename,omitempty" yaml:"semgrepignore_filename,omitempty" mapstructure:"semgrepignore_filename,omitempty"`
+}
+
+type TargetingConfForceProjectRoot interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TargetingConf) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["always_select_explicit_targets"]; raw != nil && !ok {
+		return fmt.Errorf("field always_select_explicit_targets in TargetingConf: required")
+	}
+	if _, ok := raw["exclude"]; raw != nil && !ok {
+		return fmt.Errorf("field exclude in TargetingConf: required")
+	}
+	if _, ok := raw["exclude_minified_files"]; raw != nil && !ok {
+		return fmt.Errorf("field exclude_minified_files in TargetingConf: required")
+	}
+	if _, ok := raw["explicit_targets"]; raw != nil && !ok {
+		return fmt.Errorf("field explicit_targets in TargetingConf: required")
+	}
+	if _, ok := raw["force_novcs_project"]; raw != nil && !ok {
+		return fmt.Errorf("field force_novcs_project in TargetingConf: required")
+	}
+	if _, ok := raw["max_target_bytes"]; raw != nil && !ok {
+		return fmt.Errorf("field max_target_bytes in TargetingConf: required")
+	}
+	if _, ok := raw["respect_gitignore"]; raw != nil && !ok {
+		return fmt.Errorf("field respect_gitignore in TargetingConf: required")
+	}
+	if _, ok := raw["respect_semgrepignore_files"]; raw != nil && !ok {
+		return fmt.Errorf("field respect_semgrepignore_files in TargetingConf: required")
+	}
+	type Plain TargetingConf
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TargetingConf(plain)
+	return nil
+}
+
+type Targets interface{}
+
+type TestsResult struct {
+	// ConfigMissingFixtests corresponds to the JSON schema field
+	// "config_missing_fixtests".
+	ConfigMissingFixtests []Fpath `json:"config_missing_fixtests" yaml:"config_missing_fixtests" mapstructure:"config_missing_fixtests"`
+
+	// ConfigMissingTests corresponds to the JSON schema field "config_missing_tests".
+	ConfigMissingTests []Fpath `json:"config_missing_tests" yaml:"config_missing_tests" mapstructure:"config_missing_tests"`
+
+	// ConfigWithErrors corresponds to the JSON schema field "config_with_errors".
+	ConfigWithErrors []ConfigError `json:"config_with_errors" yaml:"config_with_errors" mapstructure:"config_with_errors"`
+
+	// FixtestResults corresponds to the JSON schema field "fixtest_results".
+	FixtestResults map[string]FixtestResult `json:"fixtest_results" yaml:"fixtest_results" mapstructure:"fixtest_results"`
+
+	// Results corresponds to the JSON schema field "results".
+	Results map[string]Checks `json:"results" yaml:"results" mapstructure:"results"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TestsResult) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["config_missing_fixtests"]; raw != nil && !ok {
+		return fmt.Errorf("field config_missing_fixtests in TestsResult: required")
+	}
+	if _, ok := raw["config_missing_tests"]; raw != nil && !ok {
+		return fmt.Errorf("field config_missing_tests in TestsResult: required")
+	}
+	if _, ok := raw["config_with_errors"]; raw != nil && !ok {
+		return fmt.Errorf("field config_with_errors in TestsResult: required")
+	}
+	if _, ok := raw["fixtest_results"]; raw != nil && !ok {
+		return fmt.Errorf("field fixtest_results in TestsResult: required")
+	}
+	if _, ok := raw["results"]; raw != nil && !ok {
+		return fmt.Errorf("field results in TestsResult: required")
+	}
+	type Plain TestsResult
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TestsResult(plain)
+	return nil
+}
+
+type Todo int
+
+type TrAddCacheRequest struct {
+	// NewEntries corresponds to the JSON schema field "new_entries".
+	NewEntries [][]interface{} `json:"new_entries" yaml:"new_entries" mapstructure:"new_entries"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TrAddCacheRequest) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["new_entries"]; raw != nil && !ok {
+		return fmt.Errorf("field new_entries in TrAddCacheRequest: required")
+	}
+	type Plain TrAddCacheRequest
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TrAddCacheRequest(plain)
+	return nil
+}
+
+type TrCacheKey struct {
+	// EngineVersion corresponds to the JSON schema field "engine_version".
+	EngineVersion int `json:"engine_version" yaml:"engine_version" mapstructure:"engine_version"`
+
+	// Extra corresponds to the JSON schema field "extra".
+	Extra string `json:"extra" yaml:"extra" mapstructure:"extra"`
+
+	// PackageUrl corresponds to the JSON schema field "package_url".
+	PackageUrl string `json:"package_url" yaml:"package_url" mapstructure:"package_url"`
+
+	// RuleId corresponds to the JSON schema field "rule_id".
+	RuleId RuleId `json:"rule_id" yaml:"rule_id" mapstructure:"rule_id"`
+
+	// RuleVersion corresponds to the JSON schema field "rule_version".
+	RuleVersion string `json:"rule_version" yaml:"rule_version" mapstructure:"rule_version"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TrCacheKey) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["engine_version"]; raw != nil && !ok {
+		return fmt.Errorf("field engine_version in TrCacheKey: required")
+	}
+	if _, ok := raw["extra"]; raw != nil && !ok {
+		return fmt.Errorf("field extra in TrCacheKey: required")
+	}
+	if _, ok := raw["package_url"]; raw != nil && !ok {
+		return fmt.Errorf("field package_url in TrCacheKey: required")
+	}
+	if _, ok := raw["rule_id"]; raw != nil && !ok {
+		return fmt.Errorf("field rule_id in TrCacheKey: required")
+	}
+	if _, ok := raw["rule_version"]; raw != nil && !ok {
+		return fmt.Errorf("field rule_version in TrCacheKey: required")
+	}
+	type Plain TrCacheKey
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TrCacheKey(plain)
+	return nil
+}
+
+type TrCacheMatchResult struct {
+	// Matches corresponds to the JSON schema field "matches".
+	Matches []CliMatch `json:"matches" yaml:"matches" mapstructure:"matches"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TrCacheMatchResult) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["matches"]; raw != nil && !ok {
+		return fmt.Errorf("field matches in TrCacheMatchResult: required")
+	}
+	type Plain TrCacheMatchResult
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TrCacheMatchResult(plain)
+	return nil
+}
+
+type TrQueryCacheRequest struct {
+	// Entries corresponds to the JSON schema field "entries".
+	Entries []TrCacheKey `json:"entries" yaml:"entries" mapstructure:"entries"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TrQueryCacheRequest) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["entries"]; raw != nil && !ok {
+		return fmt.Errorf("field entries in TrQueryCacheRequest: required")
+	}
+	type Plain TrQueryCacheRequest
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TrQueryCacheRequest(plain)
+	return nil
+}
+
+type TrQueryCacheResponse struct {
+	// Cached corresponds to the JSON schema field "cached".
+	Cached [][]interface{} `json:"cached" yaml:"cached" mapstructure:"cached"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TrQueryCacheResponse) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["cached"]; raw != nil && !ok {
+		return fmt.Errorf("field cached in TrQueryCacheResponse: required")
+	}
+	type Plain TrQueryCacheResponse
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TrQueryCacheResponse(plain)
+	return nil
+}
+
+type TransitiveFinding struct {
+	// M corresponds to the JSON schema field "m".
+	M CoreMatch `json:"m" yaml:"m" mapstructure:"m"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TransitiveFinding) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["m"]; raw != nil && !ok {
+		return fmt.Errorf("field m in TransitiveFinding: required")
+	}
+	type Plain TransitiveFinding
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TransitiveFinding(plain)
+	return nil
+}
+
+type TransitiveReachabilityFilterParams struct {
+	// Dependencies corresponds to the JSON schema field "dependencies".
+	Dependencies []ResolvedDependency `json:"dependencies" yaml:"dependencies" mapstructure:"dependencies"`
+
+	// Findings corresponds to the JSON schema field "findings".
+	Findings []TransitiveFinding `json:"findings" yaml:"findings" mapstructure:"findings"`
+
+	// RulesPath corresponds to the JSON schema field "rules_path".
+	RulesPath Fpath `json:"rules_path" yaml:"rules_path" mapstructure:"rules_path"`
+
+	// WriteToCache corresponds to the JSON schema field "write_to_cache".
+	WriteToCache bool `json:"write_to_cache" yaml:"write_to_cache" mapstructure:"write_to_cache"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TransitiveReachabilityFilterParams) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["dependencies"]; raw != nil && !ok {
+		return fmt.Errorf("field dependencies in TransitiveReachabilityFilterParams: required")
+	}
+	if _, ok := raw["findings"]; raw != nil && !ok {
+		return fmt.Errorf("field findings in TransitiveReachabilityFilterParams: required")
+	}
+	if _, ok := raw["rules_path"]; raw != nil && !ok {
+		return fmt.Errorf("field rules_path in TransitiveReachabilityFilterParams: required")
+	}
+	if _, ok := raw["write_to_cache"]; raw != nil && !ok {
+		return fmt.Errorf("field write_to_cache in TransitiveReachabilityFilterParams: required")
+	}
+	type Plain TransitiveReachabilityFilterParams
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TransitiveReachabilityFilterParams(plain)
+	return nil
+}
+
+type TransitiveReachable struct {
+	// CallgraphReachable corresponds to the JSON schema field "callgraph_reachable".
+	CallgraphReachable interface{} `json:"callgraph_reachable" yaml:"callgraph_reachable" mapstructure:"callgraph_reachable"`
+
+	// Explanation corresponds to the JSON schema field "explanation".
+	Explanation interface{} `json:"explanation" yaml:"explanation" mapstructure:"explanation"`
+
+	// Matches corresponds to the JSON schema field "matches".
+	Matches [][]interface{} `json:"matches" yaml:"matches" mapstructure:"matches"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TransitiveReachable) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["callgraph_reachable"]; raw != nil && !ok {
+		return fmt.Errorf("field callgraph_reachable in TransitiveReachable: required")
+	}
+	if _, ok := raw["explanation"]; raw != nil && !ok {
+		return fmt.Errorf("field explanation in TransitiveReachable: required")
+	}
+	if _, ok := raw["matches"]; raw != nil && !ok {
+		return fmt.Errorf("field matches in TransitiveReachable: required")
+	}
+	type Plain TransitiveReachable
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TransitiveReachable(plain)
+	return nil
+}
+
+type TransitiveUndetermined struct {
+	// Explanation corresponds to the JSON schema field "explanation".
+	Explanation interface{} `json:"explanation" yaml:"explanation" mapstructure:"explanation"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TransitiveUndetermined) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["explanation"]; raw != nil && !ok {
+		return fmt.Errorf("field explanation in TransitiveUndetermined: required")
+	}
+	type Plain TransitiveUndetermined
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TransitiveUndetermined(plain)
+	return nil
+}
+
+type TransitiveUnreachable struct {
+	// AnalyzedPackages corresponds to the JSON schema field "analyzed_packages".
+	AnalyzedPackages []FoundDependency `json:"analyzed_packages" yaml:"analyzed_packages" mapstructure:"analyzed_packages"`
+
+	// Explanation corresponds to the JSON schema field "explanation".
+	Explanation interface{} `json:"explanation" yaml:"explanation" mapstructure:"explanation"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *TransitiveUnreachable) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["analyzed_packages"]; raw != nil && !ok {
+		return fmt.Errorf("field analyzed_packages in TransitiveUnreachable: required")
+	}
+	if _, ok := raw["explanation"]; raw != nil && !ok {
+		return fmt.Errorf("field explanation in TransitiveUnreachable: required")
+	}
+	type Plain TransitiveUnreachable
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = TransitiveUnreachable(plain)
+	return nil
+}
+
+type TriageIgnored struct {
+	// TriageIgnoredMatchBasedIds corresponds to the JSON schema field
+	// "triage_ignored_match_based_ids".
+	TriageIgnoredMatchBasedIds []string `json:"triage_ignored_match_based_ids,omitempty" yaml:"triage_ignored_match_based_ids,omitempty" mapstructure:"triage_ignored_match_based_ids,omitempty"`
+
+	// TriageIgnoredSyntacticIds corresponds to the JSON schema field
+	// "triage_ignored_syntactic_ids".
+	TriageIgnoredSyntacticIds []string `json:"triage_ignored_syntactic_ids,omitempty" yaml:"triage_ignored_syntactic_ids,omitempty" mapstructure:"triage_ignored_syntactic_ids,omitempty"`
+}
+
+type UnexpectedMatchDiagnosis struct {
+	// KillingParents corresponds to the JSON schema field "killing_parents".
+	KillingParents []KillingParent `json:"killing_parents" yaml:"killing_parents" mapstructure:"killing_parents"`
+
+	// MatchedText corresponds to the JSON schema field "matched_text".
+	MatchedText Snippet `json:"matched_text" yaml:"matched_text" mapstructure:"matched_text"`
+
+	// OriginatingKind corresponds to the JSON schema field "originating_kind".
+	OriginatingKind UnexpectedMatchDiagnosisOriginatingKind `json:"originating_kind" yaml:"originating_kind" mapstructure:"originating_kind"`
+
+	// OriginatingText corresponds to the JSON schema field "originating_text".
+	OriginatingText Snippet `json:"originating_text" yaml:"originating_text" mapstructure:"originating_text"`
+}
+
+type UnexpectedMatchDiagnosisOriginatingKind interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *UnexpectedMatchDiagnosis) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["killing_parents"]; raw != nil && !ok {
+		return fmt.Errorf("field killing_parents in UnexpectedMatchDiagnosis: required")
+	}
+	if _, ok := raw["matched_text"]; raw != nil && !ok {
+		return fmt.Errorf("field matched_text in UnexpectedMatchDiagnosis: required")
+	}
+	if _, ok := raw["originating_kind"]; raw != nil && !ok {
+		return fmt.Errorf("field originating_kind in UnexpectedMatchDiagnosis: required")
+	}
+	if _, ok := raw["originating_text"]; raw != nil && !ok {
+		return fmt.Errorf("field originating_text in UnexpectedMatchDiagnosis: required")
+	}
+	type Plain UnexpectedMatchDiagnosis
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = UnexpectedMatchDiagnosis(plain)
+	return nil
+}
+
+type UnexpectedNoMatchDiagnosis struct {
+	// Kind corresponds to the JSON schema field "kind".
+	Kind UnexpectedNoMatchDiagnosisKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+
+	// Line corresponds to the JSON schema field "line".
+	Line int `json:"line" yaml:"line" mapstructure:"line"`
+}
+
+type UnexpectedNoMatchDiagnosisKind interface{}
+
+type UnexpectedNoMatchDiagnosisKind_1 interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *UnexpectedNoMatchDiagnosis) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["kind"]; raw != nil && !ok {
+		return fmt.Errorf("field kind in UnexpectedNoMatchDiagnosis: required")
+	}
+	if _, ok := raw["line"]; raw != nil && !ok {
+		return fmt.Errorf("field line in UnexpectedNoMatchDiagnosis: required")
+	}
+	type Plain UnexpectedNoMatchDiagnosis
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = UnexpectedNoMatchDiagnosis(plain)
+	return nil
+}
+
+type UnresolvedReason interface{}
+
+type UnresolvedSubproject struct {
+	// Errors corresponds to the JSON schema field "errors".
+	Errors []UnresolvedSubprojectErrorsElem `json:"errors" yaml:"errors" mapstructure:"errors"`
+
+	// Info corresponds to the JSON schema field "info".
+	Info Subproject `json:"info" yaml:"info" mapstructure:"info"`
+
+	// Reason corresponds to the JSON schema field "reason".
+	Reason UnresolvedSubprojectReason `json:"reason" yaml:"reason" mapstructure:"reason"`
+}
+
+type UnresolvedSubprojectErrorsElem interface{}
+
+type UnresolvedSubprojectReason interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *UnresolvedSubproject) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["errors"]; raw != nil && !ok {
+		return fmt.Errorf("field errors in UnresolvedSubproject: required")
+	}
+	if _, ok := raw["info"]; raw != nil && !ok {
+		return fmt.Errorf("field info in UnresolvedSubproject: required")
+	}
+	if _, ok := raw["reason"]; raw != nil && !ok {
+		return fmt.Errorf("field reason in UnresolvedSubproject: required")
+	}
+	type Plain UnresolvedSubproject
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = UnresolvedSubproject(plain)
+	return nil
+}
+
+type Uri string
+
+type Uuid string
+
+type ValidationState interface{}
+
+type Version string
+
+type VerySlowStats struct {
+	// CountRatio corresponds to the JSON schema field "count_ratio".
+	CountRatio float64 `json:"count_ratio" yaml:"count_ratio" mapstructure:"count_ratio"`
+
+	// TimeRatio corresponds to the JSON schema field "time_ratio".
+	TimeRatio float64 `json:"time_ratio" yaml:"time_ratio" mapstructure:"time_ratio"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *VerySlowStats) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["count_ratio"]; raw != nil && !ok {
+		return fmt.Errorf("field count_ratio in VerySlowStats: required")
+	}
+	if _, ok := raw["time_ratio"]; raw != nil && !ok {
+		return fmt.Errorf("field time_ratio in VerySlowStats: required")
+	}
+	type Plain VerySlowStats
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = VerySlowStats(plain)
 	return nil
 }

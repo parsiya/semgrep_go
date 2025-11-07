@@ -1,6 +1,8 @@
 module github.com/parsiya/semgrep_go
 
-go 1.19
+go 1.23.0
+
+toolchain go1.24.5
 
 require github.com/olekukonko/tablewriter v0.0.5
 
