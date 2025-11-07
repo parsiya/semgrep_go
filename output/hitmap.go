@@ -97,9 +97,9 @@ func (m HitMap) ToStringTable(headers []string, sortByCount bool) string {
 	// Create the table writer and set the destination to the string builder.
 	table := tablewriter.NewWriter(&final)
 	// Set the headers.
-	table.SetHeader(headers)
+	table.Header(headers)
 	// Append the data.
-	table.AppendBulk(data)
+	table.Append(data)
 	// Render the table.
 	table.Render()
 	// Return the data.
